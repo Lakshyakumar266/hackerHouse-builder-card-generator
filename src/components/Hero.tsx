@@ -163,7 +163,7 @@ export default function Hero({ onStart }: Props) {
               fontStyle: 'normal',
             }}
           >
-            BUILDER ID · FORMAT B
+            BUILDER ID CARD · FRAME  GENERATOR
           </span>
           <div style={{ width: 36, height: 1, background: 'var(--color-yellow)' }} />
         </motion.div>
