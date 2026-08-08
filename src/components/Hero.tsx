@@ -6,6 +6,7 @@
 import { motion } from 'motion/react';
 import hackerHouseLogo from '../assets/Hacker house.png';
 import goaHindi from '../assets/goa_hindi.svg';
+import studioLogo from '../assets/2-47.svg';
 
 interface Props {
   onStart: () => void;
@@ -54,18 +55,11 @@ export default function Hero({ onStart }: Props) {
           >
             GOA, INDIA · 28 – 31 OCT 2026
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 500,
-              fontSize: '11px',
-              letterSpacing: '0.18em',
-              color: 'var(--color-muted)',
-              fontStyle: 'normal',
-            }}
-          >
-            2:47 PM STUDIO
-          </span>
+          <img
+            src={studioLogo}
+            alt="2:47 PM Studio"
+            style={{ height: '22px', width: 'auto', display: 'block', opacity: 0.9 }}
+          />
         </div>
 
         {/* Full-width wordmark — the actual brand logo PNG */}
