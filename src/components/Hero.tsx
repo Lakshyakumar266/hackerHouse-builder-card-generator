@@ -1,8 +1,3 @@
-/*
- * Hallmark · component: Hero · macrostructure: Marquee Hero
- * genre: playful · nav: N6 Masthead · footer: Ft5 Statement
- */
-
 import { motion } from 'motion/react';
 import hackerHouseLogo from '../assets/Hacker house.png';
 import goaHindi from '../assets/goa_hindi.svg';
@@ -25,7 +20,6 @@ export default function Hero({ onStart }: Props) {
         background: 'var(--color-bg)',
       }}
     >
-
       {/* ── N6 Masthead: full-width brand bar ── */}
       <header
         style={{
@@ -85,7 +79,6 @@ export default function Hero({ onStart }: Props) {
             transition={{ delay: 0.5, type: 'spring', stiffness: 320, damping: 20 }}
             style={{
               position: 'absolute',
-              /* Horizontal center, vertically centered in logo height */
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%) rotate(-4deg)',
@@ -252,7 +245,7 @@ export default function Hero({ onStart }: Props) {
       </main>
 
       {/* ── Bottom stat strip ── */}
-      <motion.footer
+      <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 1.1 }}
@@ -304,7 +297,68 @@ export default function Hero({ onStart }: Props) {
             </span>
           </div>
         ))}
-      </motion.footer>
+      </motion.div>
+
+      {/* ── Hallmark Footer Component: Ft3 Index Style & Credit ── */}
+      <footer
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 'var(--sp-3)',
+          padding: 'var(--sp-6) var(--sp-4)',
+          borderTop: '2px solid var(--color-border-yellow)',
+          background: 'var(--color-forest)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 900,
+              fontSize: '12px',
+              letterSpacing: '0.16em',
+              color: 'var(--color-cream)',
+            }}
+          >
+            MADE WITH ⚡ BY <span style={{ color: 'var(--color-yellow)' }}>LAKSHYA</span>
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--sp-4)', alignItems: 'center' }}>
+          <a
+            href="https://x.com/Lakshyakumar266"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              color: 'var(--color-teal)',
+              textDecoration: 'none',
+            }}
+          >
+            𝕏 @Lakshyakumar266
+          </a>
+          <span style={{ color: 'var(--color-border-yellow)', fontSize: '10px' }}>•</span>
+          <a
+            href="https://github.com/Lakshyakumar266"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              color: 'var(--color-pink)',
+              textDecoration: 'none',
+            }}
+          >
+            GITHUB @Lakshyakumar266
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
