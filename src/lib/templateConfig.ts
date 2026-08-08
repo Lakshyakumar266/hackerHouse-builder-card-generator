@@ -65,16 +65,16 @@ export const TEMPLATES: TemplateConfig[] = [
       "height": 1350
     },
     "photo": {
-      "x": 347,
+      "x": 368,
       "y": 443,
       "w": 331,
       "h": 461,
-      "scale": 1.04
+      "scale": 1.05
     },
     "elements": {
       "name": {
-        "x": 327,
-        "y": 1028,
+        "x": 335,
+        "y": 1036,
         "maxWidth": 900,
         "fontSize": 39,
         "fontWeight": 900,
@@ -82,8 +82,8 @@ export const TEMPLATES: TemplateConfig[] = [
         "align": "center"
       },
       "role": {
-        "x": 764,
-        "y": 1029,
+        "x": 777,
+        "y": 1039,
         "maxWidth": 860,
         "fontSize": 35,
         "fontWeight": 900,
@@ -91,30 +91,30 @@ export const TEMPLATES: TemplateConfig[] = [
         "align": "center"
       },
       "title": {
-        "x": 322,
-        "y": 1105,
+        "x": 327,
+        "y": 1118,
         "fontSize": 39,
         "fontWeight": 900,
         "color": "#002b0b",
         "align": "center"
       },
       "barcode": {
-        "x": 433,
-        "y": 1223,
-        "w": 180,
+        "x": 464,
+        "y": 1231,
+        "w": 150,
         "h": 50,
         "color": "#FFD51C"
       },
       "qrcode": {
-        "x": 646,
-        "y": 1203,
+        "x": 656,
+        "y": 1206,
         "w": 80,
         "h": 80,
         "color": "#ffffff"
       },
       "serial": {
-        "x": 109,
-        "y": 1251,
+        "x": 135,
+        "y": 1261,
         "fontSize": 26,
         "fontWeight": 900,
         "color": "#000000",
@@ -123,193 +123,268 @@ export const TEMPLATES: TemplateConfig[] = [
     }
   },
   {
-    id: 'template_2',
-    name: 'Template 2',
-    src: '/templates/templete_2.png',
-    metadata: { width: 1080, height: 1350 },
-    photo: {
-      x: 329,
-      y: 341,
-      w: 423,
-      h: 527,
-      scale: 1,
+    "id": "template_2",
+    "name": "Template 2",
+    "src": "/templates/templete_2.png",
+    "metadata": {
+      "width": 1080,
+      "height": 1350
     },
-    elements: {
-      name: {
-        x: 540,
-        y: 910,
-        maxWidth: 900,
-        fontSize: 60,
-        fontWeight: 900,
-        color: '#F5E9B8',
-        align: 'center',
-      },
-      role: {
-        x: 540,
-        y: 990,
-        maxWidth: 860,
-        fontSize: 26,
-        fontWeight: 900,
-        color: '#FFD51C',
-        align: 'center',
-      },
-      title: {
-        x: 540,
-        y: 1055,
-        fontSize: 22,
-        fontWeight: 900,
-        color: '#16B98C',
-        align: 'center',
-      },
-      barcode: {
-        x: 430,
-        y: 1115,
-        w: 220,
-        h: 40,
-        color: '#FFD51C',
-      },
-      qrcode: {
-        x: 930,
-        y: 1190,
-        w: 80,
-        h: 80,
-        color: '#FFD51C',
-      },
-      serial: {
-        x: 80,
-        y: 1220,
-        fontSize: 18,
-        fontWeight: 900,
-        color: '#B7C7A7',
-        align: 'left',
-      },
+    "photo": {
+      "x": 329,
+      "y": 341,
+      "w": 423,
+      "h": 527,
+      "scale": 1
     },
+    "elements": {
+      "name": {
+        "x": 540,
+        "y": 942,
+        "maxWidth": 900,
+        "fontSize": 50,
+        "fontWeight": 900,
+        "color": "#19120c",
+        "align": "center"
+      },
+      "role": {
+        "x": 542,
+        "y": 1023,
+        "maxWidth": 860,
+        "fontSize": 25,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "title": {
+        "x": 414,
+        "y": 1120,
+        "fontSize": 27,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "barcode": {
+        "x": 451,
+        "y": 1247,
+        "w": 180,
+        "h": 40,
+        "color": "#FFD51C"
+      },
+      "qrcode": {
+        "x": 679,
+        "y": 1224,
+        "w": 70,
+        "h": 70,
+        "color": "#FFD51C"
+      },
+      "serial": {
+        "x": 157,
+        "y": 1264,
+        "fontSize": 26,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "left"
+      }
+    }
   },
   {
-    id: 'template_3',
-    name: 'Template 3',
-    src: '/templates/templete_3.png',
-    metadata: { width: 1080, height: 1350 },
-    photo: {
-      x: 285,
-      y: 421,
-      w: 705,
-      h: 500,
-      scale: 1,
+    "id": "template_3",
+    "name": "Template 3",
+    "src": "/templates/templete_3.png",
+    "metadata": {
+      "width": 1080,
+      "height": 1350
     },
-    elements: {
-      name: {
-        x: 70,
-        y: 980,
-        maxWidth: 940,
-        fontSize: 60,
-        fontWeight: 900,
-        color: '#F5E9B8',
-        align: 'left',
-      },
-      role: {
-        x: 70,
-        y: 1055,
-        maxWidth: 940,
-        fontSize: 26,
-        fontWeight: 900,
-        color: '#FFD51C',
-        align: 'left',
-      },
-      title: {
-        x: 70,
-        y: 1120,
-        fontSize: 22,
-        fontWeight: 900,
-        color: '#16B98C',
-        align: 'left',
-      },
-      barcode: {
-        x: 70,
-        y: 1175,
-        w: 220,
-        h: 40,
-        color: '#FFD51C',
-      },
-      qrcode: {
-        x: 920,
-        y: 1175,
-        w: 80,
-        h: 80,
-        color: '#FFD51C',
-      },
-      serial: {
-        x: 70,
-        y: 1250,
-        fontSize: 18,
-        fontWeight: 900,
-        color: '#B7C7A7',
-        align: 'left',
-      },
+    "photo": {
+      "x": 358,
+      "y": 480,
+      "w": 705,
+      "h": 500,
+      "scale": 0.49
     },
+    "elements": {
+      "name": {
+        "x": 240,
+        "y": 1014,
+        "maxWidth": 940,
+        "fontSize": 50,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "left"
+      },
+      "role": {
+        "x": 220,
+        "y": 1156,
+        "maxWidth": 940,
+        "fontSize": 26,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "left"
+      },
+      "title": {
+        "x": 378,
+        "y": 1084,
+        "fontSize": 31,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "left"
+      },
+      "barcode": {
+        "x": 272,
+        "y": 1232,
+        "w": 220,
+        "h": 40,
+        "color": "#FFD51C"
+      },
+      "qrcode": {
+        "x": 822,
+        "y": 1095,
+        "w": 150,
+        "h": 150,
+        "color": "#FFD51C"
+      },
+      "serial": {
+        "x": 307,
+        "y": 1211,
+        "fontSize": 18,
+        "fontWeight": 900,
+        "color": "#B7C7A7",
+        "align": "left"
+      }
+    }
   },
   {
-    id: 'template_4',
-    name: 'Template 4',
-    src: '/templates/templete_4.png',
-    metadata: { width: 1080, height: 1350 },
-    photo: {
-      x: 369,
-      y: 374,
-      w: 343,
-      h: 484,
-      scale: 1,
+    "id": "template_4",
+    "name": "Template 4",
+    "src": "/templates/templete_4.png",
+    "metadata": {
+      "width": 1080,
+      "height": 1350
     },
-    elements: {
-      name: {
-        x: 540,
-        y: 910,
-        maxWidth: 900,
-        fontSize: 60,
-        fontWeight: 900,
-        color: '#F5E9B8',
-        align: 'center',
-      },
-      role: {
-        x: 540,
-        y: 980,
-        maxWidth: 860,
-        fontSize: 26,
-        fontWeight: 900,
-        color: '#FFD51C',
-        align: 'center',
-      },
-      title: {
-        x: 540,
-        y: 1045,
-        fontSize: 22,
-        fontWeight: 900,
-        color: '#16B98C',
-        align: 'center',
-      },
-      barcode: {
-        x: 430,
-        y: 1105,
-        w: 220,
-        h: 40,
-        color: '#FFD51C',
-      },
-      qrcode: {
-        x: 930,
-        y: 1180,
-        w: 80,
-        h: 80,
-        color: '#FFD51C',
-      },
-      serial: {
-        x: 80,
-        y: 1210,
-        fontSize: 18,
-        fontWeight: 900,
-        color: '#B7C7A7',
-        align: 'left',
-      },
+    "photo": {
+      "x": 369,
+      "y": 374,
+      "w": 343,
+      "h": 484,
+      "scale": 1
     },
+    "elements": {
+      "name": {
+        "x": 264,
+        "y": 1047,
+        "maxWidth": 900,
+        "fontSize": 42,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "role": {
+        "x": 626,
+        "y": 1058,
+        "maxWidth": 860,
+        "fontSize": 31,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "title": {
+        "x": 274,
+        "y": 1187,
+        "fontSize": 41,
+        "fontWeight": 900,
+        "color": "#70c8ff",
+        "align": "center"
+      },
+      "barcode": {
+        "x": 574,
+        "y": 1182,
+        "w": 220,
+        "h": 40,
+        "color": "#FFD51C"
+      },
+      "qrcode": {
+        "x": 862,
+        "y": 1056,
+        "w": 120,
+        "h": 120,
+        "color": "#FFD51C"
+      },
+      "serial": {
+        "x": 601,
+        "y": 1153,
+        "fontSize": 22,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "left"
+      }
+    }
+  },
+  {
+    "id": "template_5",
+    "name": "Template 5",
+    "src": "/templates/templete_5.png",
+    "metadata": {
+      "width": 1080,
+      "height": 1350
+    },
+    "photo": {
+      "x": 369,
+      "y": 374,
+      "w": 343,
+      "h": 484,
+      "scale": 1
+    },
+    "elements": {
+      "name": {
+        "x": 362,
+        "y": 944,
+        "maxWidth": 900,
+        "fontSize": 38,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "role": {
+        "x": 334,
+        "y": 1120,
+        "maxWidth": 860,
+        "fontSize": 31,
+        "fontWeight": 900,
+        "color": "#000000",
+        "align": "center"
+      },
+      "title": {
+        "x": 394,
+        "y": 1016,
+        "fontSize": 35,
+        "fontWeight": 900,
+        "color": "#ff70f3",
+        "align": "center"
+      },
+      "barcode": {
+        "x": 598,
+        "y": 1107,
+        "w": 220,
+        "h": 40,
+        "color": "#FFD51C"
+      },
+      "qrcode": {
+        "x": 836,
+        "y": 1025,
+        "w": 120,
+        "h": 120,
+        "color": "#FFD51C"
+      },
+      "serial": {
+        "x": 609,
+        "y": 1037,
+        "fontSize": 23,
+        "fontWeight": 900,
+        "color": "#ffffff",
+        "align": "left"
+      }
+    }
   },
 ];
 

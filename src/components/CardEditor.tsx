@@ -8,6 +8,12 @@ import {
   type PhotoConfig,
 } from '../lib/templateConfig';
 import { generateBuilderTitle, generateSerialCode } from '../lib/builderTitle';
+import {
+  renderCardCanvas,
+  ensureFontsLoaded,
+  loadImage,
+  type BuilderData,
+} from '../lib/cardRenderer';
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -24,6 +30,7 @@ export interface EditorState {
   templateId: string;
   photo: PhotoConfig;
   elements: EditorElements;
+  titleOffset?: number;
 }
 
 export type DragTarget =
@@ -40,7 +47,7 @@ interface Props {
   builderName: string;
   builderRole: string;
   initialState?: EditorState | null;
-  onGenerate: (state: EditorState, templateSrc: string) => void;
+  onGenerate: (state: EditorState, templateSrc: string, titleOffset: number) => void;
   onBack: () => void;
   isGenerating: boolean;
 }
@@ -68,6 +75,18 @@ export default function CardEditor({
     (window.location.search.includes('dev=1') ||
       import.meta.env.VITE_CARD_DEV_MODE === 'true');
 
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const compareCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Compare render mode in DEV mode
+  const [showCompareRender, setShowCompareRender] = useState(false);
+
+  // Loaded images cache for live canvas rendering
+  const [loadedImages, setLoadedImages] = useState<{
+    photoImg: HTMLImageElement;
+    templateImg: HTMLImageElement;
+  } | null>(null);
+
   // Find initial template or default
   const initialTmpl =
     initialState
@@ -75,6 +94,11 @@ export default function CardEditor({
       : TEMPLATES[0];
 
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig>(initialTmpl);
+
+  // Title reshuffle offset state
+  const [titleOffset, setTitleOffset] = useState<number>(
+    initialState?.titleOffset || 0
+  );
 
   // Photo & Elements state (in 1080×1350 canvas space)
   const [photo, setPhoto] = useState<PhotoConfig>(
@@ -91,6 +115,9 @@ export default function CardEditor({
       setSelectedTemplate(tmpl);
       setPhoto({ ...initialState.photo });
       setElements(JSON.parse(JSON.stringify(initialState.elements)));
+      if (initialState.titleOffset !== undefined) {
+        setTitleOffset(initialState.titleOffset);
+      }
     }
   }, [initialState]);
 
@@ -104,8 +131,134 @@ export default function CardEditor({
   const [copySuccess, setCopySuccess] = useState(false);
 
   // Auto-generate title and serial code for preview
-  const generatedTitle = generateBuilderTitle(builderName, builderRole);
+  const generatedTitle = generateBuilderTitle(builderName, builderRole, titleOffset);
   const generatedSerial = generateSerialCode(builderName);
+
+  // Reshuffle title callback
+  const handleReshuffleTitle = useCallback(() => {
+    setTitleOffset((prev) => prev + 1);
+  }, []);
+
+  // Preload images whenever croppedPhoto or template changes
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      await ensureFontsLoaded();
+      try {
+        const [photoImg, templateImg] = await Promise.all([
+          loadImage(croppedPhoto),
+          loadImage(selectedTemplate.src),
+        ]);
+        if (isMounted) {
+          setLoadedImages({ photoImg, templateImg });
+        }
+      } catch (err) {
+        console.error('Failed loading preview images', err);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [croppedPhoto, selectedTemplate.src]);
+
+  // Redraw preview canvas whenever state or loadedImages change
+  useEffect(() => {
+    if (!loadedImages) return;
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    const targetW = Math.round(PREVIEW_W * dpr);
+    const targetH = Math.round(PREVIEW_H * dpr);
+
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+
+    const builderData: BuilderData = {
+      name: builderName,
+      whatYouBuild: builderRole,
+      croppedImageDataUrl: croppedPhoto,
+    };
+
+    const editorState: EditorState = {
+      templateId: selectedTemplate.id,
+      photo,
+      elements,
+      titleOffset,
+    };
+
+    renderCardCanvas(ctx, {
+      canvasWidth: targetW,
+      canvasHeight: targetH,
+      data: builderData,
+      editorState,
+      template: selectedTemplate,
+      loadedImages,
+      titleOffset,
+    });
+  }, [
+    loadedImages,
+    photo,
+    elements,
+    selectedTemplate,
+    builderName,
+    builderRole,
+    croppedPhoto,
+    titleOffset,
+  ]);
+
+  // Render comparison canvas in dev mode when requested
+  useEffect(() => {
+    if (!isDevMode || !showCompareRender || !loadedImages) return;
+    const compareCanvas = compareCanvasRef.current;
+    if (!compareCanvas) return;
+
+    const ctx = compareCanvas.getContext('2d');
+    if (!ctx) return;
+
+    // Render at native 1080x1350 export resolution
+    compareCanvas.width = 1080;
+    compareCanvas.height = 1350;
+
+    const builderData: BuilderData = {
+      name: builderName,
+      whatYouBuild: builderRole,
+      croppedImageDataUrl: croppedPhoto,
+    };
+
+    const editorState: EditorState = {
+      templateId: selectedTemplate.id,
+      photo,
+      elements,
+      titleOffset,
+    };
+
+    renderCardCanvas(ctx, {
+      canvasWidth: 1080,
+      canvasHeight: 1350,
+      data: builderData,
+      editorState,
+      template: selectedTemplate,
+      loadedImages,
+      titleOffset,
+    });
+  }, [
+    isDevMode,
+    showCompareRender,
+    loadedImages,
+    photo,
+    elements,
+    selectedTemplate,
+    builderName,
+    builderRole,
+    croppedPhoto,
+    titleOffset,
+  ]);
 
   // Drag bookkeeping
   const dragRef = useRef<{
@@ -150,8 +303,15 @@ export default function CardEditor({
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragRef.current) return;
-    const dx = (e.clientX - dragRef.current.startClientX) / SCALE;
-    const dy = (e.clientY - dragRef.current.startClientY) / SCALE;
+
+    const canvas = previewCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const currentScale = rect.width / 1080;
+
+    const dx = (e.clientX - dragRef.current.startClientX) / currentScale;
+    const dy = (e.clientY - dragRef.current.startClientY) / currentScale;
     const nx = Math.round(dragRef.current.startElX + dx);
     const ny = Math.round(dragRef.current.startElY + dy);
     const target = dragRef.current.target;
@@ -177,9 +337,10 @@ export default function CardEditor({
       templateId: selectedTemplate.id,
       photo,
       elements,
+      titleOffset,
     };
-    onGenerate(editorState, selectedTemplate.src);
-  }, [selectedTemplate, photo, elements, onGenerate]);
+    onGenerate(editorState, selectedTemplate.src, titleOffset);
+  }, [selectedTemplate, photo, elements, titleOffset, onGenerate]);
 
   /* ── Dev Mode: Clean Export JSON ── */
   const getExportableJson = useCallback(() => {
@@ -224,20 +385,12 @@ export default function CardEditor({
     }
   }, [importJsonText]);
 
-  /* ── Canvas to Preview Scaled Calculations ── */
-  const pPhoto = {
-    x: photo.x * SCALE,
-    y: photo.y * SCALE,
-    w: photo.w * photo.scale * SCALE,
-    h: photo.h * photo.scale * SCALE,
-  };
-
-  const getElementStyle = (target: DragTarget) => {
+  const getHitboxStyle = (target: DragTarget) => {
     const isSelected = selectedEl === target;
     return {
       outline: isSelected
         ? '2px solid var(--color-yellow)'
-        : '1px dashed rgba(255, 213, 28, 0.4)',
+        : '1px dashed rgba(255, 213, 28, 0.35)',
       cursor: 'grab' as const,
       position: 'absolute' as const,
       zIndex: isSelected ? 12 : 10,
@@ -252,6 +405,22 @@ export default function CardEditor({
     selectedEl !== 'photo' && selectedEl !== 'barcode' && selectedEl !== 'qrcode'
       ? (elements[selectedEl as keyof EditorElements] as ElementPosition)
       : null;
+
+  /* ── Calculate Text Bounding Box for Interaction Hitboxes ── */
+  const getTextBounds = (e: ElementPosition, textStr: string) => {
+    const fontSize = e.fontSize || 24;
+    const px = e.x * SCALE;
+    const py = e.y * SCALE;
+    const approxCharW = fontSize * 0.58;
+    const textW = Math.min(textStr.length * approxCharW, e.maxWidth || 900) * SCALE;
+    const textH = fontSize * SCALE * 1.1;
+
+    let left = px;
+    if (e.align === 'center') left = px - textW / 2;
+    if (e.align === 'right') left = px - textW;
+
+    return { left, top: py, width: textW, height: textH };
+  };
 
   return (
     <motion.div
@@ -386,7 +555,7 @@ export default function CardEditor({
                 onClick={() => setSelectedEl(el)}
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
+                  fontWeight: 900,
                   fontSize: '11px',
                   letterSpacing: '0.12em',
                   padding: '6px 14px',
@@ -406,7 +575,7 @@ export default function CardEditor({
         </div>
       </div>
 
-      {/* ── Main Card Preview with Canvas Coordinate Mapping ── */}
+      {/* ── Main Card Preview with Canonical Canvas Renderer ── */}
       <div>
         <div
           onPointerMove={onPointerMove}
@@ -425,325 +594,202 @@ export default function CardEditor({
             touchAction: 'none',
           }}
         >
-          {/* ──────────────────────────────────────────────────────────────────
-           * LAYER 1: User Photo — BEHIND the template
-           * ───────────────────────────────────────────────────────────────── */}
-          <img
-            src={croppedPhoto}
-            alt="User photo"
-            draggable={false}
-            onPointerDown={(e) => startDrag(e, 'photo', photo.x, photo.y)}
+          {/* Canonical Editor Canvas (Visual Source of Truth) */}
+          <canvas
+            ref={previewCanvasRef}
             style={{
-              ...getElementStyle('photo'),
-              left: pPhoto.x,
-              top: pPhoto.y,
-              width: pPhoto.w,
-              height: pPhoto.h,
-              objectFit: 'cover',
-              zIndex: selectedEl === 'photo' ? 4 : 1,
+              width: PREVIEW_W,
+              height: PREVIEW_H,
+              display: 'block',
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
             }}
           />
 
-          {/* ──────────────────────────────────────────────────────────────────
-           * LAYER 2: Template PNG — ON TOP of photo (transparent cutout reveals photo)
-           * ───────────────────────────────────────────────────────────────── */}
-          <img
-            src={selectedTemplate.src}
-            alt={selectedTemplate.name}
-            draggable={false}
+          {/* Transparent Interaction Layer (Hitboxes & Selection outlines) */}
+          <div
             style={{
               position: 'absolute',
               inset: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'fill',
-              zIndex: 5,
-              pointerEvents: 'none',
+              zIndex: 10,
             }}
-          />
-
-          {/* ──────────────────────────────────────────────────────────────────
-           * LAYER 3: Dynamic Text Elements & Barcode / QR — ON TOP of template
-           * Top-aligned baseline with 1:1 Canvas parity!
-           * ───────────────────────────────────────────────────────────────── */}
-
-          {/* 1. NAME (bold, no underline, no shadow) */}
-          {(() => {
-            const e = elements.name;
-            const px = e.x * SCALE;
-            const py = e.y * SCALE;
-            const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'name', e.x, e.y)}
-                style={{
-                  ...getElementStyle('name'),
-                  left: px,
-                  top: py,
-                  transform: `translateX(${alignX})`,
-                  padding: '0 2px',
-                  lineHeight: 1,
-                  background:
-                    activeEl === 'name' || selectedEl === 'name'
-                      ? 'rgba(255, 213, 28, 0.2)'
-                      : 'transparent',
-                }}
-              >
-                <span
+          >
+            {/* PHOTO HITBOX */}
+            {(() => {
+              const pPhoto = {
+                x: photo.x * SCALE,
+                y: photo.y * SCALE,
+                w: photo.w * photo.scale * SCALE,
+                h: photo.h * photo.scale * SCALE,
+              };
+              return (
+                <div
+                  onPointerDown={(e) => startDrag(e, 'photo', photo.x, photo.y)}
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 900,
-                    fontSize: `${Math.round((e.fontSize || 64) * SCALE)}px`,
-                    color: e.color,
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    textAlign: e.align,
-                    lineHeight: 1,
+                    ...getHitboxStyle('photo'),
+                    left: pPhoto.x,
+                    top: pPhoto.y,
+                    width: pPhoto.w,
+                    height: pPhoto.h,
+                    zIndex: selectedEl === 'photo' ? 4 : 1,
                   }}
                 >
-                  {builderName.toUpperCase() || 'YOUR NAME'}
-                </span>
-                {selectedEl === 'name' && <BadgeLabel>NAME</BadgeLabel>}
-              </div>
-            );
-          })()}
+                  {selectedEl === 'photo' && <BadgeLabel>PHOTO</BadgeLabel>}
+                </div>
+              );
+            })()}
 
-          {/* 2. ROLE (bold, no shadow) */}
-          {(() => {
-            const e = elements.role;
-            const px = e.x * SCALE;
-            const py = e.y * SCALE;
-            const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'role', e.x, e.y)}
-                style={{
-                  ...getElementStyle('role'),
-                  left: px,
-                  top: py,
-                  transform: `translateX(${alignX})`,
-                  padding: '0 2px',
-                  maxWidth: (e.maxWidth || 860) * SCALE,
-                  lineHeight: 1,
-                  background:
-                    activeEl === 'role' || selectedEl === 'role'
-                      ? 'rgba(255, 213, 28, 0.2)'
-                      : 'transparent',
-                }}
-              >
-                <span
+            {/* NAME HITBOX */}
+            {(() => {
+              const bounds = getTextBounds(elements.name, builderName.toUpperCase() || 'YOUR NAME');
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'name', elements.name.x, elements.name.y)}
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 900,
-                    fontSize: `${Math.round((e.fontSize || 26) * SCALE)}px`,
-                    color: e.color,
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    textAlign: e.align,
-                    lineHeight: 1.25,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    ...getHitboxStyle('name'),
+                    left: bounds.left,
+                    top: bounds.top,
+                    width: bounds.width,
+                    height: bounds.height,
+                    background:
+                      activeEl === 'name' || selectedEl === 'name'
+                        ? 'rgba(255, 213, 28, 0.2)'
+                        : 'transparent',
                   }}
                 >
-                  {builderRole || 'What do you build?'}
-                </span>
-                {selectedEl === 'role' && <BadgeLabel>ROLE</BadgeLabel>}
-              </div>
-            );
-          })()}
+                  {selectedEl === 'name' && <BadgeLabel>NAME</BadgeLabel>}
+                </div>
+              );
+            })()}
 
-          {/* 3. BUILDER TITLE (bold, no quotes, no shadow) */}
-          {(() => {
-            const e = elements.title;
-            const px = e.x * SCALE;
-            const py = e.y * SCALE;
-            const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'title', e.x, e.y)}
-                style={{
-                  ...getElementStyle('title'),
-                  left: px,
-                  top: py,
-                  transform: `translateX(${alignX})`,
-                  padding: '0 2px',
-                  lineHeight: 1,
-                  background:
-                    activeEl === 'title' || selectedEl === 'title'
-                      ? 'rgba(255, 213, 28, 0.2)'
-                      : 'transparent',
-                }}
-              >
-                <span
+            {/* ROLE HITBOX */}
+            {(() => {
+              const bounds = getTextBounds(elements.role, builderRole || 'What do you build?');
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'role', elements.role.x, elements.role.y)}
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 900,
-                    fontSize: `${Math.round((e.fontSize || 22) * SCALE)}px`,
-                    color: e.color,
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    textAlign: e.align,
-                    lineHeight: 1,
+                    ...getHitboxStyle('role'),
+                    left: bounds.left,
+                    top: bounds.top,
+                    width: bounds.width,
+                    height: bounds.height,
+                    background:
+                      activeEl === 'role' || selectedEl === 'role'
+                        ? 'rgba(255, 213, 28, 0.2)'
+                        : 'transparent',
                   }}
                 >
-                  {generatedTitle}
-                </span>
-                {selectedEl === 'title' && <BadgeLabel>TITLE</BadgeLabel>}
-              </div>
-            );
-          })()}
+                  {selectedEl === 'role' && <BadgeLabel>ROLE</BadgeLabel>}
+                </div>
+              );
+            })()}
 
-          {/* 4. BARCODE GRAPHIC */}
-          {(() => {
-            const bc = elements.barcode || { x: 433, y: 1223, w: 180, h: 50, color: '#FFD51C' };
-            const px = bc.x * SCALE;
-            const py = bc.y * SCALE;
-            const pw = bc.w * SCALE;
-            const ph = bc.h * SCALE;
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'barcode', bc.x, bc.y)}
-                style={{
-                  ...getElementStyle('barcode'),
-                  left: px,
-                  top: py,
-                  width: pw,
-                  height: ph,
-                  padding: '1px',
-                  background:
-                    activeEl === 'barcode' || selectedEl === 'barcode'
-                      ? 'rgba(255, 213, 28, 0.25)'
-                      : 'transparent',
-                }}
-              >
-                <svg width="100%" height="100%" viewBox={`0 0 ${bc.w} ${bc.h}`}>
-                  {Array.from({ length: 36 }).map((_, idx) => {
-                    const charCode = generatedSerial.charCodeAt(idx % generatedSerial.length) || 65;
-                    const isGap = (charCode + idx * 3) % 5 === 0 && idx > 1 && idx < 34;
-                    const isWide = (charCode + idx * 7) % 3 === 0;
-                    const unit = bc.w / (36 * 1.6);
-                    const barW = isWide ? unit * 2.2 : unit * 1.1;
-
-                    let curX = 0;
-                    for (let j = 0; j < idx; j++) {
-                      const c = generatedSerial.charCodeAt(j % generatedSerial.length) || 65;
-                      const w = (c + j * 7) % 3 === 0 ? unit * 2.2 : unit * 1.1;
-                      curX += w + unit * 0.5;
-                    }
-
-                    if (isGap) return null;
-                    return <rect key={idx} x={curX} y={0} width={barW} height={bc.h} fill={bc.color} />;
-                  })}
-                </svg>
-                {selectedEl === 'barcode' && <BadgeLabel>BARCODE</BadgeLabel>}
-              </div>
-            );
-          })()}
-
-          {/* 5. QR CODE GRAPHIC */}
-          {(() => {
-            const qr = elements.qrcode || { x: 930, y: 1200, w: 80, h: 80, color: '#ffffff' };
-            const px = qr.x * SCALE;
-            const py = qr.y * SCALE;
-            const pw = qr.w * SCALE;
-            const ph = qr.h * SCALE;
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'qrcode', qr.x, qr.y)}
-                style={{
-                  ...getElementStyle('qrcode'),
-                  left: px,
-                  top: py,
-                  width: pw,
-                  height: ph,
-                  padding: '1px',
-                  background:
-                    activeEl === 'qrcode' || selectedEl === 'qrcode'
-                      ? 'rgba(255, 213, 28, 0.25)'
-                      : 'transparent',
-                }}
-              >
-                <svg width="100%" height="100%" viewBox={`0 0 ${qr.w} ${qr.h}`}>
-                  {/* Outer & inner finder patterns */}
-                  {[[0, 0], [qr.w * 0.75, 0], [0, qr.h * 0.75]].map(([fx, fy], idx) => (
-                    <g key={idx}>
-                      <rect x={fx} y={fy} width={qr.w * 0.25} height={qr.h * 0.25} fill={qr.color} />
-                      <rect x={fx + qr.w * 0.05} y={fy + qr.h * 0.05} width={qr.w * 0.15} height={qr.h * 0.15} fill="#000" />
-                      <rect x={fx + qr.w * 0.08} y={fy + qr.h * 0.08} width={qr.w * 0.09} height={qr.h * 0.09} fill={qr.color} />
-                    </g>
-                  ))}
-                  {/* Modules */}
-                  {Array.from({ length: 12 }).map((_, r) =>
-                    Array.from({ length: 12 }).map((_, c) => {
-                      if ((r < 4 && c < 4) || (r < 4 && c >= 8) || (r >= 8 && c < 4)) return null;
-                      const charCode = generatedSerial.charCodeAt((r * 12 + c) % generatedSerial.length) || 72;
-                      if ((charCode + r * 11 + c * 17) % 2 === 0) {
-                        return (
-                          <rect
-                            key={`${r}-${c}`}
-                            x={c * (qr.w / 12)}
-                            y={r * (qr.h / 12)}
-                            width={(qr.w / 12) * 0.9}
-                            height={(qr.h / 12) * 0.9}
-                            fill={qr.color}
-                          />
-                        );
-                      }
-                      return null;
-                    })
-                  )}
-                </svg>
-                {selectedEl === 'qrcode' && <BadgeLabel>QRCODE</BadgeLabel>}
-              </div>
-            );
-          })()}
-
-          {/* 6. SERIAL (bold, no shadow) */}
-          {(() => {
-            const e = elements.serial;
-            const px = e.x * SCALE;
-            const py = e.y * SCALE;
-            const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'serial', e.x, e.y)}
-                style={{
-                  ...getElementStyle('serial'),
-                  left: px,
-                  top: py,
-                  transform: `translateX(${alignX})`,
-                  padding: '0 2px',
-                  lineHeight: 1,
-                  background:
-                    activeEl === 'serial' || selectedEl === 'serial'
-                      ? 'rgba(255, 213, 28, 0.2)'
-                      : 'transparent',
-                }}
-              >
-                <span
+            {/* BUILDER TITLE HITBOX */}
+            {(() => {
+              const bounds = getTextBounds(elements.title, generatedTitle);
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'title', elements.title.x, elements.title.y)}
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 900,
-                    fontSize: `${Math.round((e.fontSize || 14) * SCALE)}px`,
-                    color: e.color,
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    textAlign: e.align,
-                    lineHeight: 1,
+                    ...getHitboxStyle('title'),
+                    left: bounds.left,
+                    top: bounds.top,
+                    width: bounds.width,
+                    height: bounds.height,
+                    background:
+                      activeEl === 'title' || selectedEl === 'title'
+                        ? 'rgba(255, 213, 28, 0.2)'
+                        : 'transparent',
                   }}
                 >
-                  {generatedSerial}
-                </span>
-                {selectedEl === 'serial' && <BadgeLabel>SERIAL</BadgeLabel>}
-              </div>
-            );
-          })()}
+                  {selectedEl === 'title' && <BadgeLabel>TITLE</BadgeLabel>}
+                </div>
+              );
+            })()}
+
+            {/* BARCODE HITBOX */}
+            {(() => {
+              const bc = elements.barcode || { x: 454, y: 1223, w: 150, h: 50, color: '#000000' };
+              const px = bc.x * SCALE;
+              const py = bc.y * SCALE;
+              const pw = bc.w * SCALE;
+              const ph = bc.h * SCALE;
+
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'barcode', bc.x, bc.y)}
+                  style={{
+                    ...getHitboxStyle('barcode'),
+                    left: px,
+                    top: py,
+                    width: pw,
+                    height: ph,
+                    background:
+                      activeEl === 'barcode' || selectedEl === 'barcode'
+                        ? 'rgba(255, 213, 28, 0.25)'
+                        : 'transparent',
+                  }}
+                >
+                  {selectedEl === 'barcode' && <BadgeLabel>BARCODE</BadgeLabel>}
+                </div>
+              );
+            })()}
+
+            {/* QR CODE HITBOX */}
+            {(() => {
+              const qr = elements.qrcode || { x: 646, y: 1203, w: 80, h: 80, color: '#000000' };
+              const px = qr.x * SCALE;
+              const py = qr.y * SCALE;
+              const pw = qr.w * SCALE;
+              const ph = qr.h * SCALE;
+
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'qrcode', qr.x, qr.y)}
+                  style={{
+                    ...getHitboxStyle('qrcode'),
+                    left: px,
+                    top: py,
+                    width: pw,
+                    height: ph,
+                    background:
+                      activeEl === 'qrcode' || selectedEl === 'qrcode'
+                        ? 'rgba(255, 213, 28, 0.25)'
+                        : 'transparent',
+                  }}
+                >
+                  {selectedEl === 'qrcode' && <BadgeLabel>QRCODE</BadgeLabel>}
+                </div>
+              );
+            })()}
+
+            {/* SERIAL HITBOX */}
+            {(() => {
+              const bounds = getTextBounds(elements.serial, generatedSerial);
+              return (
+                <div
+                  onPointerDown={(evt) => startDrag(evt, 'serial', elements.serial.x, elements.serial.y)}
+                  style={{
+                    ...getHitboxStyle('serial'),
+                    left: bounds.left,
+                    top: bounds.top,
+                    width: bounds.width,
+                    height: bounds.height,
+                    background:
+                      activeEl === 'serial' || selectedEl === 'serial'
+                        ? 'rgba(255, 213, 28, 0.2)'
+                        : 'transparent',
+                  }}
+                >
+                  {selectedEl === 'serial' && <BadgeLabel>SERIAL</BadgeLabel>}
+                </div>
+              );
+            })()}
+          </div>
         </div>
       </div>
 
@@ -755,10 +801,24 @@ export default function CardEditor({
           padding: 'var(--sp-4)',
         }}
       >
-        <p className="hhg-label" style={{ marginBottom: 'var(--sp-3)' }}>
-          <span style={{ color: 'var(--color-yellow)' }}>◆</span> SELECTED:{' '}
-          <span style={{ color: 'var(--color-text)' }}>{selectedEl.toUpperCase()}</span>
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--sp-3)' }}>
+          <p className="hhg-label" style={{ margin: 0 }}>
+            <span style={{ color: 'var(--color-yellow)' }}>◆</span> SELECTED:{' '}
+            <span style={{ color: 'var(--color-text)' }}>{selectedEl.toUpperCase()}</span>
+          </p>
+
+          {/* Reshuffle Title Button when TITLE is selected */}
+          {selectedEl === 'title' && (
+            <button
+              type="button"
+              onClick={handleReshuffleTitle}
+              className="btn-ink btn-yellow"
+              style={{ fontSize: '11px', padding: '4px 10px', boxShadow: 'none' }}
+            >
+              🔀 RESHUFFLE TITLE
+            </button>
+          )}
+        </div>
 
         {/* PHOTO CONTROLS */}
         {selectedEl === 'photo' && (
@@ -912,42 +972,10 @@ export default function CardEditor({
               </div>
             </div>
 
-            <div>
-              <label className="hhg-label">COLOR</label>
-              <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center' }}>
-                <input
-                  type="color"
-                  value={elements[selectedEl].color}
-                  onChange={(evt) => {
-                    const nc = evt.target.value;
-                    setElements((prev) => ({
-                      ...prev,
-                      [selectedEl]: { ...prev[selectedEl], color: nc },
-                    }));
-                  }}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    padding: 0,
-                    border: '1px solid var(--color-border)',
-                    cursor: 'pointer',
-                    background: 'none',
-                  }}
-                />
-                <input
-                  type="text"
-                  className="hhg-input"
-                  value={elements[selectedEl].color}
-                  onChange={(evt) => {
-                    const nc = evt.target.value;
-                    setElements((prev) => ({
-                      ...prev,
-                      [selectedEl]: { ...prev[selectedEl], color: nc },
-                    }));
-                  }}
-                  style={{ fontSize: '13px', padding: '8px 10px' }}
-                />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+              <span className="hhg-label" style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+                COLOR: SOLID BLACK (#000000)
+              </span>
             </div>
           </div>
         )}
@@ -1226,6 +1254,20 @@ export default function CardEditor({
                 DOWNLOAD JSON
               </button>
               <button
+                onClick={() => setShowCompareRender(!showCompareRender)}
+                className="btn-ink btn-ghost"
+                style={{
+                  fontSize: '11px',
+                  padding: '6px 12px',
+                  border: '1px solid var(--color-pink)',
+                  boxShadow: 'none',
+                  color: 'var(--color-pink)',
+                  background: showCompareRender ? 'var(--color-pink)' : 'transparent',
+                }}
+              >
+                {showCompareRender ? 'HIDE COMPARE' : 'COMPARE RENDER'}
+              </button>
+              <button
                 onClick={() => setShowImportModal(!showImportModal)}
                 className="btn-ink btn-ghost"
                 style={{
@@ -1240,6 +1282,51 @@ export default function CardEditor({
               </button>
             </div>
           </div>
+
+          {/* Dev Mode Side-by-Side Compare Render View */}
+          {showCompareRender && (
+            <div
+              style={{
+                background: 'var(--color-dark)',
+                padding: 'var(--sp-3)',
+                marginBottom: 'var(--sp-3)',
+                border: '1px solid var(--color-yellow)',
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 900,
+                  fontSize: '11px',
+                  color: 'var(--color-yellow)',
+                  marginBottom: 'var(--sp-2)',
+                }}
+              >
+                🔍 CANONICAL RENDER COMPARISON (1080×1350 Native Export Output)
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--sp-4)', overflowX: 'auto' }}>
+                <div>
+                  <p style={{ fontSize: '10px', color: 'var(--color-cream)', marginBottom: 4 }}>
+                    PREVIEW CANVAS ({PREVIEW_W}×{PREVIEW_H})
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '10px', color: 'var(--color-yellow)', marginBottom: 4 }}>
+                    EXPORT CANVAS (1080×1350 Native Output Scaled to Match)
+                  </p>
+                  <canvas
+                    ref={compareCanvasRef}
+                    style={{
+                      width: PREVIEW_W,
+                      height: PREVIEW_H,
+                      border: '1px solid var(--color-yellow)',
+                      display: 'block',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Import Modal */}
           {showImportModal && (

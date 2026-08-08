@@ -1,5 +1,5 @@
 /**
- * Deterministic builder title generator.
+ * Deterministic builder title generator with reshuffle offset support.
  * Generates a 2-word title based on the user's name + role string.
  */
 
@@ -29,11 +29,11 @@ function hash(str: string): number {
   return Math.abs(h);
 }
 
-export function generateBuilderTitle(name: string, role: string): string {
+export function generateBuilderTitle(name: string, role: string, offset = 0): string {
   const seed = `${name.toLowerCase()}${role.toLowerCase()}`;
-  const h = hash(seed);
-  const first = FIRST_WORDS[h % FIRST_WORDS.length];
-  const second = SECOND_WORDS[(h >> 5) % SECOND_WORDS.length];
+  const h = hash(seed) + offset * 13;
+  const first = FIRST_WORDS[Math.abs(h) % FIRST_WORDS.length];
+  const second = SECOND_WORDS[Math.abs(h >> 3) % SECOND_WORDS.length];
   return `${first} ${second}`;
 }
 

@@ -40,7 +40,7 @@ export default function App() {
   }, []);
 
   const handleGenerate = useCallback(
-    async (editorState: EditorState, templateSrc: string) => {
+    async (editorState: EditorState, templateSrc: string, titleOffset = 0) => {
       if (!croppedPhoto || !formData) return;
       setIsGenerating(true);
       setSavedEditorState(editorState); // Retain custom user editor state
@@ -50,7 +50,7 @@ export default function App() {
           whatYouBuild: formData.whatYouBuild,
           croppedImageDataUrl: croppedPhoto,
         };
-        const url = await generateCard(builderData, editorState, templateSrc);
+        const url = await generateCard(builderData, editorState, templateSrc, titleOffset);
         setCardDataUrl(url);
         setStage('result');
       } catch (err) {
