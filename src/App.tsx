@@ -579,7 +579,7 @@ export default function App() {
                   type="id-card"
                   name={builderName}
                   filename={`hh-goa-2026-${builderName.toLowerCase().replace(/\s+/g, '-') || 'builder-card'}.png`}
-                  captionText="Building in Goa. See you at HH Goa 2026. 🌴"
+                  captionText="Just landed on the builder map. 🌴&#10;&#10;See you at HH Goa 2026."
                   onCreateAnother={handleCreateAnother}
                 />
               </div>
@@ -668,7 +668,7 @@ export default function App() {
                   dataUrl={frameDataUrl}
                   type="frame"
                   filename="hh-goa-2026-pfp-frame.png"
-                  captionText="Just generated my Hacker House Goa 2026 profile frame! See you in Goa! 🌴⚡ #FrameInGoa"
+                  captionText="Just landed on the builder map. 🌴&#10;&#10;See you at HH Goa 2026."
                   onCreateAnother={handleCreateAnother}
                 />
               </div>

@@ -9,10 +9,13 @@ export interface XShareOptions {
 }
 
 export function buildXShareUrl(options: XShareOptions = {}): string {
-  const { text = 'Building in Goa. 🌴', shareUrl = '' } = options;
+  const {
+    text = 'Just landed on the builder map. 🌴\n\nSee you at HH Goa 2026.',
+    shareUrl = '',
+  } = options;
 
   // Build caption with mandatory hashtags
-  let fullText = `${text.trim()}\n\n#FrameInGoa #HHGoa2026`;
+  let fullText = `${text.trim()}\n\n#FrameInGoa #HackerHouseGoa #HHGoa`;
   if (shareUrl) {
     fullText += `\n${shareUrl}`;
   }

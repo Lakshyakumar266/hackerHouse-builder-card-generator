@@ -63,7 +63,8 @@ export default function SharePanel({
       setGeneratedShareUrl(shareUrl);
 
       // 3. Open X post intent
-      const caption = captionText || 'Building in Goa. 🌴';
+      const caption =
+        captionText || 'Just landed on the builder map. 🌴\n\nSee you at HH Goa 2026.';
       openXShare({
         text: caption,
         shareUrl,
@@ -253,7 +254,7 @@ export default function SharePanel({
             lineHeight: 1.75,
           }}
         >
-          {captionText || 'Building in Goa. See you at HH Goa 2026. 🌴'}
+          {captionText || 'Just landed on the builder map. 🌴\n\nSee you at HH Goa 2026.'}
           <br />
           <span
             style={{
@@ -262,7 +263,7 @@ export default function SharePanel({
               fontStyle: 'normal',
             }}
           >
-            #FrameInGoa #HHGoa2026
+            #FrameInGoa #HackerHouseGoa #HHGoa
           </span>
         </p>
       </div>
