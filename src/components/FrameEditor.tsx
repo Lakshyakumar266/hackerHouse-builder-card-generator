@@ -174,7 +174,8 @@ export default function FrameEditor({
             width: '100%',
             height: previewH,
             overflow: 'hidden',
-            border: '3px solid var(--color-dark)',
+            borderRadius: frameShape === 'oval' ? '50%' : '0px',
+            border: frameShape === 'oval' ? 'none' : '3px solid var(--color-dark)',
             outline: `2px solid ${
               frameStyle === 'pink'
                 ? 'var(--color-pink)'
@@ -183,7 +184,7 @@ export default function FrameEditor({
                 : 'var(--color-yellow)'
             }`,
             boxShadow: '5px 5px 0 var(--color-pink)',
-            background: '#063D2B',
+            background: frameShape === 'oval' ? 'transparent' : '#063D2B',
             margin: '0 auto',
           }}
         >
