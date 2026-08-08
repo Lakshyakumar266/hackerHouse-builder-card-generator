@@ -53,12 +53,6 @@ interface Props {
   isGenerating: boolean;
 }
 
-/* ── Canvas / Preview Scaling ────────────────────────────────────────────── */
-
-const PREVIEW_W = 380;
-const PREVIEW_H = Math.round((1350 / 1080) * PREVIEW_W); // ≈ 475
-const SCALE = PREVIEW_W / 1080;
-
 /* ── Component ───────────────────────────────────────────────────────────── */
 
 export default function CardEditor({
@@ -78,6 +72,35 @@ export default function CardEditor({
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const compareCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic responsive preview width & height state
+  const [previewW, setPreviewW] = useState<number>(380);
+  const previewH = Math.round((1350 / 1080) * previewW);
+  const SCALE = previewW / 1080;
+
+  // Auto-resize listener for 100% mobile responsiveness
+  useEffect(() => {
+    const el = previewWrapperRef.current;
+    if (!el) return;
+
+    const updateSize = () => {
+      const w = el.clientWidth;
+      if (w > 0) {
+        setPreviewW(Math.min(w, 380));
+      }
+    };
+
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    window.addEventListener('resize', updateSize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, []);
 
   // Compare render mode in DEV mode
   const [showCompareRender, setShowCompareRender] = useState(false);
@@ -185,8 +208,8 @@ export default function CardEditor({
     if (!ctx) return;
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    const targetW = Math.round(PREVIEW_W * dpr);
-    const targetH = Math.round(PREVIEW_H * dpr);
+    const targetW = Math.round(previewW * dpr);
+    const targetH = Math.round(previewH * dpr);
 
     if (canvas.width !== targetW || canvas.height !== targetH) {
       canvas.width = targetW;
@@ -227,6 +250,8 @@ export default function CardEditor({
     croppedPhoto,
     titleOffset,
     serialTimestamp,
+    previewW,
+    previewH,
   ]);
 
   // Render comparison canvas in dev mode when requested
@@ -596,16 +621,24 @@ export default function CardEditor({
         </div>
       </div>
 
-      {/* ── Main Card Preview with Canonical Canvas Renderer ── */}
-      <div>
+      {/* ── Main Card Preview with Dynamic Responsive Container ── */}
+      <div
+        ref={previewWrapperRef}
+        style={{
+          width: '100%',
+          maxWidth: '380px',
+          margin: '0 auto',
+          touchAction: 'none',
+        }}
+      >
         <div
           onPointerMove={onPointerMove}
           onPointerUp={stopDrag}
           onPointerLeave={stopDrag}
           style={{
             position: 'relative',
-            width: PREVIEW_W,
-            height: PREVIEW_H,
+            width: '100%',
+            height: previewH,
             overflow: 'hidden',
             border: '3px solid var(--color-dark)',
             outline: '2px solid var(--color-yellow)',
@@ -619,8 +652,8 @@ export default function CardEditor({
           <canvas
             ref={previewCanvasRef}
             style={{
-              width: PREVIEW_W,
-              height: PREVIEW_H,
+              width: '100%',
+              height: previewH,
               display: 'block',
               position: 'absolute',
               inset: 0,
@@ -1343,7 +1376,7 @@ export default function CardEditor({
               <div style={{ display: 'flex', gap: 'var(--sp-4)', overflowX: 'auto' }}>
                 <div>
                   <p style={{ fontSize: '10px', color: 'var(--color-cream)', marginBottom: 4 }}>
-                    PREVIEW CANVAS ({PREVIEW_W}×{PREVIEW_H})
+                    PREVIEW CANVAS ({previewW}×{previewH})
                   </p>
                 </div>
                 <div>
@@ -1353,8 +1386,8 @@ export default function CardEditor({
                   <canvas
                     ref={compareCanvasRef}
                     style={{
-                      width: PREVIEW_W,
-                      height: PREVIEW_H,
+                      width: previewW,
+                      height: previewH,
                       border: '1px solid var(--color-yellow)',
                       display: 'block',
                     }}
