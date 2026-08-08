@@ -43,35 +43,53 @@ export async function preloadFrameAssets(photoDataUrl: string): Promise<FrameLoa
   return { photoImg, logoImg, goaImg };
 }
 
-/** Helper function to render curved text along a circular arc */
+/** Helper function to render curved text along a circular arc with natural kerning (zero letter gapping) */
 function drawArcText(
   ctx: CanvasRenderingContext2D,
   text: string,
   centerX: number,
   centerY: number,
   radius: number,
-  startAngleRad: number,
-  endAngleRad: number,
+  centerAngleRad: number,
   clockwise = true
 ) {
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+
   const numChars = text.length;
   if (numChars === 0) return;
-  const angleRange = endAngleRad - startAngleRad;
-  const step = numChars > 1 ? angleRange / (numChars - 1) : 0;
+
+  // Calculate total angle span based on actual rendered text width
+  const totalTextWidth = ctx.measureText(text).width;
+  const totalAngleSpan = totalTextWidth / radius;
+  const startAngle = clockwise
+    ? centerAngleRad - totalAngleSpan / 2
+    : centerAngleRad + totalAngleSpan / 2;
+
+  let currentAngle = startAngle;
 
   for (let i = 0; i < numChars; i++) {
-    const angle = startAngleRad + i * step;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
+    const char = text[i];
+    const charWidth = ctx.measureText(char).width;
+    const halfCharAngle = (charWidth / 2) / radius;
+
+    // Center character along arc position
+    const charCenterAngle = clockwise
+      ? currentAngle + halfCharAngle
+      : currentAngle - halfCharAngle;
+
+    const x = centerX + radius * Math.cos(charCenterAngle);
+    const y = centerY + radius * Math.sin(charCenterAngle);
 
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(angle + (clockwise ? Math.PI / 2 : -Math.PI / 2));
-    ctx.fillText(text[i], 0, 0);
+    ctx.rotate(charCenterAngle + (clockwise ? Math.PI / 2 : -Math.PI / 2));
+    ctx.fillText(char, 0, 0);
     ctx.restore();
+
+    // Advance current angle by character width
+    currentAngle += (charWidth / radius) * (clockwise ? 1 : -1);
   }
   ctx.restore();
 }
@@ -224,16 +242,16 @@ export function renderFrameCanvas(
     ctx.textBaseline = 'top';
     ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 936);
 
-    // 2:47 PM Studio Text in Bottom Banner Center (No SVG image)
+    // 2:47 PM Studio Text in Bottom Banner Center
     ctx.fillStyle = accentColor;
     ctx.font = '700 13px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('2:47 PM STUDIO  ◆  BUILD  ◆  SHIP  ◆  SIGNAL', 540, 970);
 
-    // Curved Arch Text along LEFT and RIGHT Perimeter Rings
+    // Curved Arch Text along LEFT and RIGHT Perimeter Rings with Natural Kerning
     ctx.fillStyle = accentColor;
-    ctx.font = '900 13px "Space Grotesk", sans-serif';
+    ctx.font = '900 14px "Space Grotesk", sans-serif';
 
     // Left Arch Text (West curve)
     drawArcText(
@@ -242,8 +260,7 @@ export function renderFrameCanvas(
       540,
       540,
       432,
-      Math.PI * 0.70,
-      Math.PI * 1.30,
+      Math.PI,
       false
     );
 
@@ -254,8 +271,7 @@ export function renderFrameCanvas(
       540,
       540,
       432,
-      Math.PI * -0.30,
-      Math.PI * 0.30,
+      0,
       true
     );
 
