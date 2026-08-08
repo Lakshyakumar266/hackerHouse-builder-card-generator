@@ -3,6 +3,8 @@ import {
   renderFrameCanvas,
   preloadFrameAssets,
   type FramePhotoConfig,
+  type FrameShape,
+  type FrameStyle,
 } from '../lib/frameRenderer';
 
 export function useFrameGenerator() {
@@ -10,7 +12,8 @@ export function useFrameGenerator() {
     async (
       photoDataUrl: string,
       photoConfig: FramePhotoConfig,
-      frameStyle: 'classic' | 'pink' | 'teal' = 'classic'
+      frameStyle: FrameStyle = 'classic',
+      frameShape: FrameShape = 'square'
     ): Promise<string> => {
       // Create offscreen 1080 x 1080 canvas
       const canvas = document.createElement('canvas');
@@ -30,6 +33,7 @@ export function useFrameGenerator() {
         croppedImageDataUrl: photoDataUrl,
         photoConfig,
         frameStyle,
+        frameShape,
         loadedImages,
       });
 

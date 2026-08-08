@@ -21,12 +21,16 @@ export interface FrameLoadedImages {
   studioImg: HTMLImageElement;
 }
 
+export type FrameShape = 'square' | 'oval';
+export type FrameStyle = 'classic' | 'pink' | 'teal';
+
 export interface RenderFrameOptions {
   canvasWidth: number;
-  canvasHeight: number;
+  canvasHeight?: number;
   croppedImageDataUrl: string;
   photoConfig: FramePhotoConfig;
-  frameStyle?: 'classic' | 'pink' | 'teal';
+  frameStyle?: FrameStyle;
+  frameShape?: FrameShape;
   loadedImages?: FrameLoadedImages | null;
 }
 
@@ -50,7 +54,7 @@ export function renderFrameCanvas(
   ctx: CanvasRenderingContext2D,
   options: RenderFrameOptions
 ) {
-  const { canvasWidth, photoConfig, frameStyle = 'classic', loadedImages } = options;
+  const { canvasWidth, photoConfig, frameStyle = 'classic', frameShape = 'square', loadedImages } = options;
 
   // Compute uniform scaling factor relative to 1080 x 1080 logical space
   const renderScale = canvasWidth / 1080;
@@ -62,28 +66,32 @@ export function renderFrameCanvas(
   ctx.fillStyle = '#063D2B'; // Deep HH Forest Green
   ctx.fillRect(0, 0, 1080, 1080);
 
-  // ── LAYER 2: USER PHOTO (Centered with safe face zone) ──
+  // ── LAYER 2: USER PHOTO ──
   if (loadedImages?.photoImg) {
     const img = loadedImages.photoImg;
     ctx.save();
 
     // Center photo at (540, 540) with photoConfig offsets and scale
-    const baseDim = 840; // Base size of photo bounding area
+    const baseDim = 840;
     const drawW = baseDim * photoConfig.scale;
     const drawH = (img.height / img.width) * drawW;
 
     const centerX = 540 + photoConfig.x;
     const centerY = 540 + photoConfig.y;
 
-    // Clip photo inside an elegant rounded-rect / frame viewport
-    const clipX = 70;
-    const clipY = 70;
-    const clipW = 940;
-    const clipH = 940;
-    const clipRadius = 40;
-
     ctx.beginPath();
-    ctx.roundRect(clipX, clipY, clipW, clipH, clipRadius);
+    if (frameShape === 'oval') {
+      // Oval / Circular aperture centered at (540, 540)
+      ctx.ellipse(540, 540, 410, 410, 0, 0, Math.PI * 2);
+    } else {
+      // Square rounded viewport
+      const clipX = 70;
+      const clipY = 70;
+      const clipW = 940;
+      const clipH = 940;
+      const clipRadius = 40;
+      ctx.roundRect(clipX, clipY, clipW, clipH, clipRadius);
+    }
     ctx.clip();
 
     ctx.drawImage(img, centerX - drawW / 2, centerY - drawH / 2, drawW, drawH);
@@ -113,6 +121,21 @@ export function renderFrameCanvas(
   ctx.beginPath();
   ctx.roundRect(76, 76, 928, 928, 36);
   ctx.stroke();
+
+  // Additional Inner Oval Accent Ring if Oval mode selected
+  if (frameShape === 'oval') {
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = accentColor;
+    ctx.beginPath();
+    ctx.ellipse(540, 540, 410, 410, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#09251C';
+    ctx.beginPath();
+    ctx.ellipse(540, 540, 414, 414, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   // Corner Brutalist Blocks with Crosshairs
   const cornerSize = 48;
@@ -213,7 +236,7 @@ export function renderFrameCanvas(
   ctx.fillStyle = accentColor;
   ctx.font = '700 12px "Space Grotesk", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('HH26 · OFFICIAL PFP FRAME', 0, 0);
+  ctx.fillText(`HH26 · ${frameShape.toUpperCase()} PFP FRAME`, 0, 0);
   ctx.restore();
 
   ctx.save();

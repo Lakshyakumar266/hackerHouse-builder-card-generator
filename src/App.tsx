@@ -98,11 +98,15 @@ export default function App() {
 
   // Frame Generation
   const handleGenerateFrame = useCallback(
-    async (photoConfig: FramePhotoConfig, frameStyle: 'classic' | 'pink' | 'teal') => {
+    async (
+      photoConfig: FramePhotoConfig,
+      frameStyle: 'classic' | 'pink' | 'teal',
+      frameShape: 'square' | 'oval'
+    ) => {
       if (!croppedPhoto) return;
       setIsGenerating(true);
       try {
-        const url = await generateFrame(croppedPhoto, photoConfig, frameStyle);
+        const url = await generateFrame(croppedPhoto, photoConfig, frameStyle, frameShape);
         setFrameDataUrl(url);
         setStage('frame-result');
       } catch (err) {

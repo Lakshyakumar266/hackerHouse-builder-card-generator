@@ -5,11 +5,17 @@ import {
   preloadFrameAssets,
   type FramePhotoConfig,
   type FrameLoadedImages,
+  type FrameShape,
+  type FrameStyle,
 } from '../lib/frameRenderer';
 
 interface Props {
   croppedPhoto: string;
-  onGenerate: (photoConfig: FramePhotoConfig, frameStyle: 'classic' | 'pink' | 'teal') => void;
+  onGenerate: (
+    photoConfig: FramePhotoConfig,
+    frameStyle: FrameStyle,
+    frameShape: FrameShape
+  ) => void;
   onBack: () => void;
   isGenerating: boolean;
 }
@@ -57,7 +63,8 @@ export default function FrameEditor({
     scale: 1.0,
   });
 
-  const [frameStyle, setFrameStyle] = useState<'classic' | 'pink' | 'teal'>('classic');
+  const [frameStyle, setFrameStyle] = useState<FrameStyle>('classic');
+  const [frameShape, setFrameShape] = useState<FrameShape>('square');
   const [loadedImages, setLoadedImages] = useState<FrameLoadedImages | null>(null);
 
   // Preload assets for preview
@@ -78,7 +85,7 @@ export default function FrameEditor({
     };
   }, [croppedPhoto]);
 
-  // Redraw preview canvas whenever photoConfig, frameStyle, loadedImages, or previewW change
+  // Redraw preview canvas whenever photoConfig, frameStyle, frameShape, loadedImages, or previewW change
   useEffect(() => {
     if (!loadedImages) return;
     const canvas = previewCanvasRef.current;
@@ -102,13 +109,14 @@ export default function FrameEditor({
       croppedImageDataUrl: croppedPhoto,
       photoConfig,
       frameStyle,
+      frameShape,
       loadedImages,
     });
-  }, [loadedImages, photoConfig, frameStyle, croppedPhoto, previewW, previewH]);
+  }, [loadedImages, photoConfig, frameStyle, frameShape, croppedPhoto, previewW, previewH]);
 
   const handleGenerate = useCallback(() => {
-    onGenerate(photoConfig, frameStyle);
-  }, [photoConfig, frameStyle, onGenerate]);
+    onGenerate(photoConfig, frameStyle, frameShape);
+  }, [photoConfig, frameStyle, frameShape, onGenerate]);
 
   return (
     <motion.div
@@ -146,7 +154,7 @@ export default function FrameEditor({
             lineHeight: 1.6,
           }}
         >
-          Position and scale your face to sit comfortably inside the HH Goa frame.
+          Choose between a Square or Oval frame and position your face inside the overlay.
         </p>
       </div>
 
@@ -201,38 +209,78 @@ export default function FrameEditor({
           gap: 'var(--sp-4)',
         }}
       >
-        <p className="hhg-label" style={{ margin: 0, color: 'var(--color-yellow)' }}>
-          ◆ FRAME ACCENT COLOR
-        </p>
-        <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
-          {(
-            [
-              { id: 'classic', label: 'YELLOW (CLASSIC)', color: 'var(--color-yellow)' },
-              { id: 'pink', label: 'HOT PINK', color: 'var(--color-pink)' },
-              { id: 'teal', label: 'TEAL', color: 'var(--color-teal)' },
-            ] as const
-          ).map((st) => (
-            <button
-              key={st.id}
-              onClick={() => setFrameStyle(st.id)}
-              style={{
-                flex: 1,
-                fontFamily: 'var(--font-display)',
-                fontWeight: 900,
-                fontSize: '11px',
-                padding: '10px 4px',
-                cursor: 'pointer',
-                border: '2px solid var(--color-dark)',
-                background: frameStyle === st.id ? st.color : 'transparent',
-                color: frameStyle === st.id ? 'var(--color-dark)' : 'var(--color-cream)',
-                transition: 'all 0.15s',
-              }}
-            >
-              {st.label}
-            </button>
-          ))}
+        {/* FRAME SHAPE SELECTOR */}
+        <div>
+          <p className="hhg-label" style={{ marginBottom: 'var(--sp-2)', color: 'var(--color-yellow)' }}>
+            ◆ FRAME SHAPE
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+            {(
+              [
+                { id: 'square', label: '⬛ SQUARE FRAME' },
+                { id: 'oval', label: '⭕ OVAL / CIRCLE' },
+              ] as const
+            ).map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setFrameShape(s.id)}
+                style={{
+                  flex: 1,
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 900,
+                  fontSize: '11px',
+                  padding: '12px 6px',
+                  cursor: 'pointer',
+                  border: '2px solid var(--color-dark)',
+                  background: frameShape === s.id ? 'var(--color-yellow)' : 'transparent',
+                  color: frameShape === s.id ? 'var(--color-dark)' : 'var(--color-cream)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* ACCENT COLOR SELECTOR */}
+        <div>
+          <p className="hhg-label" style={{ marginBottom: 'var(--sp-2)', color: 'var(--color-yellow)' }}>
+            ◆ ACCENT COLOR
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
+            {(
+              [
+                { id: 'classic', label: 'YELLOW', color: 'var(--color-yellow)' },
+                { id: 'pink', label: 'HOT PINK', color: 'var(--color-pink)' },
+                { id: 'teal', label: 'TEAL', color: 'var(--color-teal)' },
+              ] as const
+            ).map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => setFrameStyle(st.id)}
+                style={{
+                  flex: 1,
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 900,
+                  fontSize: '11px',
+                  padding: '10px 4px',
+                  cursor: 'pointer',
+                  border: '2px solid var(--color-dark)',
+                  background: frameStyle === st.id ? st.color : 'transparent',
+                  color: frameStyle === st.id ? 'var(--color-dark)' : 'var(--color-cream)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* PHOTO POSITION CONTROLS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-3)' }}>
           <div>
             <label className="hhg-label">PHOTO X</label>
@@ -258,6 +306,7 @@ export default function FrameEditor({
           </div>
         </div>
 
+        {/* PHOTO ZOOM CONTROL */}
         <div>
           <div
             style={{
