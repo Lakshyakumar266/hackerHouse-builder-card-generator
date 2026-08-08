@@ -1,0 +1,202 @@
+
+
+@import "tailwindcss";
+
+:root {
+  /* Brand palette — HH Goa 2026 */
+  --color-forest:      oklch(24% 0.095 158);   /* #063D2B deep green */
+  --color-forest-mid:  oklch(31% 0.100 158);   /* #07563B mid green  */
+  --color-jungle:      oklch(39% 0.110 158);   /* #0B6746 lighter    */
+  --color-cream:       oklch(91% 0.055 90);    /* #F5E9B8 warm cream */
+  --color-paper:       oklch(95% 0.048 90);    /* #FFF4C7 paper      */
+  --color-yellow:      oklch(88% 0.175 95);    /* #FFD51C brand yellow */
+  --color-pink:        oklch(55% 0.285 355);   /* #F71969 hot pink   */
+  --color-teal:        oklch(65% 0.150 175);   /* #16B98C teal       */
+  --color-dark:        oklch(14% 0.045 158);   /* #09251C near-black */
+  --color-muted:       oklch(76% 0.058 145);   /* #B7C7A7 sage       */
+
+  /* Semantic aliases */
+  --color-bg:          var(--color-forest);
+  --color-bg-raised:   var(--color-forest-mid);
+  --color-surface:     var(--color-forest-mid);
+  --color-border:      oklch(32% 0.08 155 / 0.35);
+  --color-border-yellow: oklch(88% 0.175 95 / 0.30);
+  --color-text:        var(--color-cream);
+  --color-text-muted:  var(--color-muted);
+  --color-accent:      var(--color-yellow);
+  --color-accent-2:    var(--color-pink);
+  --color-accent-3:    var(--color-teal);
+
+  /* Typography */
+  --font-display:      "Space Grotesk", system-ui, sans-serif;
+  --font-body:         "Space Grotesk", system-ui, sans-serif;
+
+  /* Motion */
+  --ease-out-expo:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:       cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:          180ms;
+  --dur-base:          320ms;
+  --dur-slow:          600ms;
+
+  /* Spacing scale (4 pt) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* Border style shorthand */
+  --border-ink:   3px solid var(--color-dark);
+  --shadow-ink:   5px 5px 0 var(--color-dark);
+  --shadow-ink-sm: 3px 3px 0 var(--color-dark);
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  overflow-x: clip;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  min-height: 100vh;
+}
+
+/* Display headings: always roman, never italic */
+h1, h2, h3, h4, h5, h6 {
+  font-style: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--color-forest); }
+::-webkit-scrollbar-thumb  { background: var(--color-yellow); border-radius: 2px; }
+
+/* ── Selection ───────────────────────────────────────────────────────────── */
+::selection { background: var(--color-yellow); color: var(--color-dark); }
+
+/* ── Crop area overrides ─────────────────────────────────────────────────── */
+.reactEasyCrop_CropArea {
+  border: 2px solid var(--color-pink) !important;
+  box-shadow: 0 0 0 9999em oklch(24% 0.095 158 / 0.9) !important;
+}
+
+/* ── Ticker animation ────────────────────────────────────────────────────── */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 18s linear infinite;
+  gap: var(--sp-8);
+  white-space: nowrap;
+}
+
+/* ── Marquee hero wordmark ───────────────────────────────────────────────── */
+.hhg-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The PNG is yellow on transparent — it renders on forest bg perfectly */
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Ink button ──────────────────────────────────────────────────────────── */
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  border: var(--border-ink);
+  box-shadow: var(--shadow-ink);
+  transition:
+    transform var(--dur-fast) var(--ease-out-expo),
+    box-shadow var(--dur-fast) var(--ease-out-expo);
+}
+.btn-ink:hover  { transform: translate(2px, 2px); box-shadow: 3px 3px 0 var(--color-dark); }
+.btn-ink:active { transform: translate(5px, 5px); box-shadow: none; }
+.btn-ink:focus-visible { outline: 2px solid var(--color-yellow); outline-offset: 3px; }
+.btn-ink:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: var(--shadow-ink); }
+
+/* Variants */
+.btn-yellow { background: var(--color-yellow); color: var(--color-dark); }
+.btn-pink   { background: var(--color-pink);   color: var(--color-paper); }
+.btn-teal   { background: var(--color-teal);   color: var(--color-dark); }
+.btn-ghost  { background: transparent; color: var(--color-cream); }
+
+/* ── Input ───────────────────────────────────────────────────────────────── */
+.hhg-input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-cream);
+  background: oklch(32% 0.08 155 / 0.25);
+  border: 1px solid var(--color-border);
+  padding: 14px var(--sp-4);
+  outline: none;
+  transition:
+    border-color var(--dur-fast),
+    background var(--dur-fast);
+  letter-spacing: 0.01em;
+  border-radius: 0;
+}
+.hhg-input::placeholder { color: var(--color-text-muted); opacity: 0.6; }
+.hhg-input:focus {
+  border-color: var(--color-yellow);
+  background: oklch(88% 0.175 95 / 0.07);
+}
+.hhg-input:focus-visible { outline: none; }
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+.hhg-label {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--sp-2);
+  font-style: normal;
+}
+
+/* ── Step pill ───────────────────────────────────────────────────────────── */
+.step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+.step-pill > .step-num { color: var(--color-yellow); }
+
+/* ── Divider rule ────────────────────────────────────────────────────────── */
+.hhg-rule { width: 100%; height: 1px; background: var(--color-border-yellow); }
+.hhg-rule-green { width: 100%; height: 3px; background: var(--color-yellow); }
