@@ -231,17 +231,31 @@ export function renderFrameCanvas(
     ctx.textBaseline = 'top';
     ctx.fillText('2:47 PM STUDIO  ◆  BUILD  ◆  SHIP  ◆  SIGNAL', 540, 970);
 
-    // Curved Arch Text along Top & Bottom Perimeter Rings
+    // Curved Arch Text along LEFT and RIGHT Perimeter Rings
     ctx.fillStyle = accentColor;
     ctx.font = '900 13px "Space Grotesk", sans-serif';
+
+    // Left Arch Text (West curve)
     drawArcText(
       ctx,
-      '★ HACKER HOUSE GOA 2026 ★ BUILDER RESIDENCY ★ 2:47 PM STUDIO ★',
+      '★ HACKER HOUSE GOA 2026 ★',
       540,
       540,
       432,
-      Math.PI * 1.20,
-      Math.PI * 1.80,
+      Math.PI * 0.70,
+      Math.PI * 1.30,
+      false
+    );
+
+    // Right Arch Text (East curve)
+    drawArcText(
+      ctx,
+      '★ 2:47 PM STUDIO · BUILDER PFP ★',
+      540,
+      540,
+      432,
+      Math.PI * -0.30,
+      Math.PI * 0.30,
       true
     );
 
