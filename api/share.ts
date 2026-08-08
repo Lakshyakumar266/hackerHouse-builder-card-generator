@@ -39,7 +39,7 @@ function handleShareRequest({
   }
 
   const endpoint = (process.env.IMAGEKIT_URL_ENDPOINT || process.env.VITE_IMAGEKIT_URL_ENDPOINT || 'https://ik.imagekit.io/demon').replace(/\/$/, '');
-  
+
   // Construct deterministic ImageKit image URL
   const imageUrl = `${endpoint}/hh-goa-2026/shares/${type}/${shareId}.png`;
 
