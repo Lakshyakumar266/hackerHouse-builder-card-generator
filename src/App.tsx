@@ -2,7 +2,7 @@
  * Hallmark · App shell — hero → select-type → upload → [form / frame-editor] → [editor / frame-editor] → result
  */
 import './index.css';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Hero from './components/Hero';
 import CreationTypeSelector, { type CreationMode } from './components/CreationTypeSelector';
@@ -47,17 +47,7 @@ export default function App() {
   const { canvasRef, generateCard } = useCardGenerator();
   const { generateFrame } = useFrameGenerator();
 
-  // Dynamically update OG and Twitter image meta tags when an asset is generated
-  useEffect(() => {
-    const currentUrl = cardDataUrl || frameDataUrl;
-    if (!currentUrl) return;
 
-    const ogImageMeta = document.querySelector('meta[property="og:image"]');
-    const twitterImageMeta = document.querySelector('meta[name="twitter:image"]');
-
-    if (ogImageMeta) ogImageMeta.setAttribute('content', currentUrl);
-    if (twitterImageMeta) twitterImageMeta.setAttribute('content', currentUrl);
-  }, [cardDataUrl, frameDataUrl]);
 
   const handleStart = useCallback(() => {
     setStage('select-type');
@@ -586,6 +576,7 @@ export default function App() {
                 </button>
                 <SharePanel
                   dataUrl={cardDataUrl}
+                  type="id-card"
                   name={builderName}
                   filename={`hh-goa-2026-${builderName.toLowerCase().replace(/\s+/g, '-') || 'builder-card'}.png`}
                   captionText="Building in Goa. See you at HH Goa 2026. 🌴"
@@ -675,6 +666,7 @@ export default function App() {
                 </button>
                 <SharePanel
                   dataUrl={frameDataUrl}
+                  type="frame"
                   filename="hh-goa-2026-pfp-frame.png"
                   captionText="Just generated my Hacker House Goa 2026 profile frame! See you in Goa! 🌴⚡ #FrameInGoa"
                   onCreateAnother={handleCreateAnother}

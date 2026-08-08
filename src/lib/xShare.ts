@@ -4,26 +4,26 @@
 
 export interface XShareOptions {
   text?: string;
-  url?: string;
-  hashtags?: string[];
+  shareUrl?: string;
+  type?: 'frame' | 'id-card';
 }
 
 export function buildXShareUrl(options: XShareOptions = {}): string {
-  const {
-    text = 'Building in Goa. See you at HH Goa 2026. 🌴',
-    url = typeof window !== 'undefined' ? window.location.href : '',
-    hashtags = ['FrameInGoa', 'HHGoa2026'],
-  } = options;
+  const { text = 'Building in Goa. 🌴', shareUrl = '' } = options;
+
+  // Build caption with mandatory hashtags
+  let fullText = `${text.trim()}\n\n#FrameInGoa #HHGoa2026`;
+  if (shareUrl) {
+    fullText += `\n${shareUrl}`;
+  }
 
   const params = new URLSearchParams();
-  if (text) params.set('text', text);
-  if (url) params.set('url', url);
-  if (hashtags && hashtags.length > 0) params.set('hashtags', hashtags.join(','));
+  params.set('text', fullText);
 
-  return `https://x.com/intent/tweet?${params.toString()}`;
+  return `https://x.com/intent/post?${params.toString()}`;
 }
 
 export function openXShare(options?: XShareOptions) {
-  const shareUrl = buildXShareUrl(options || {});
-  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+  const intentUrl = buildXShareUrl(options || {});
+  window.open(intentUrl, '_blank', 'noopener,noreferrer');
 }
