@@ -2,6 +2,7 @@
  * Hallmark · component: SharePanel · all token refs via var()
  */
 import { motion } from 'motion/react';
+import { openXShare } from '../lib/xShare';
 
 interface Props {
   dataUrl: string;
@@ -32,10 +33,11 @@ export default function SharePanel({
   };
 
   const handleOpenX = () => {
-    const tweetText = encodeURIComponent(
-      captionText || 'Building in Goa. See you at HH Goa 2026. 🌴 #HHGoa2026 #FrameInGoa'
-    );
-    window.open(`https://x.com/intent/tweet?text=${tweetText}`, '_blank');
+    openXShare({
+      text: captionText || 'Building in Goa. See you at HH Goa 2026. 🌴',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      hashtags: ['FrameInGoa', 'HHGoa2026'],
+    });
   };
 
   return (
