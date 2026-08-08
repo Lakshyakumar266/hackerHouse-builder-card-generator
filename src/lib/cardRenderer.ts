@@ -200,6 +200,7 @@ export interface RenderCardOptions {
     templateImg: HTMLImageElement;
   };
   titleOffset?: number;
+  serialTimestamp?: number;
 }
 
 /**
@@ -218,6 +219,7 @@ export function renderCardCanvas(
     editorState,
     loadedImages,
     titleOffset = 0,
+    serialTimestamp,
   } = options;
 
   const { photo, elements } = editorState;
@@ -225,7 +227,7 @@ export function renderCardCanvas(
   const { photoImg, templateImg } = loadedImages;
 
   const title = generateBuilderTitle(name, whatYouBuild, editorState.titleOffset ?? titleOffset);
-  const serial = generateSerialCode(name);
+  const serial = generateSerialCode(name, editorState.serialTimestamp ?? serialTimestamp);
 
   // Compute scale factor from 1080×1350 logical card space to target canvas dimensions
   const renderScale = canvasWidth / CARD_W;
@@ -318,13 +320,13 @@ export function renderCardCanvas(
   ctx.textAlign = titleElem.align;
   ctx.fillText(title, titleElem.x, titleElem.y);
 
-  // ── 4. BARCODE
+  // ── 4. BARCODE (reflects unique serial ID)
   if (elements.barcode) {
     const bc = elements.barcode;
     drawBarcodeOnCanvas(ctx, bc.x, bc.y, bc.w, bc.h, serial);
   }
 
-  // ── 5. QR CODE
+  // ── 5. QR CODE (reflects unique serial ID)
   if (elements.qrcode) {
     const qr = elements.qrcode;
     drawQRCodeOnCanvas(ctx, qr.x, qr.y, qr.w, qr.h, serial);

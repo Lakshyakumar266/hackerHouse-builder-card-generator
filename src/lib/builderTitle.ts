@@ -1,6 +1,6 @@
 /**
- * Deterministic builder title generator with reshuffle offset support.
- * Generates a 2-word title based on the user's name + role string.
+ * Deterministic builder title & randomized unique serial code generator.
+ * Uses time as a randomizer so serial codes are unique every time.
  */
 
 const FIRST_WORDS = [
@@ -37,8 +37,11 @@ export function generateBuilderTitle(name: string, role: string, offset = 0): st
   return `${first} ${second}`;
 }
 
-export function generateSerialCode(name: string): string {
-  const h = hash(name);
+export function generateSerialCode(name: string, timestamp?: number): string {
+  const ts = timestamp || Date.now();
+  const seed = `${name.toLowerCase()}_${ts}`;
+  const h = hash(seed);
   const hex = h.toString(16).toUpperCase().padStart(8, '0');
-  return `HH26-${hex.slice(0, 4)}-${hex.slice(4)}`;
+  const timeSuffix = (ts % 10000).toString().padStart(4, '0');
+  return `HH26-${hex.slice(0, 4)}-${timeSuffix}`;
 }

@@ -31,6 +31,7 @@ export interface EditorState {
   photo: PhotoConfig;
   elements: EditorElements;
   titleOffset?: number;
+  serialTimestamp?: number;
 }
 
 export type DragTarget =
@@ -100,6 +101,11 @@ export default function CardEditor({
     initialState?.titleOffset || 0
   );
 
+  // Serial timestamp state for unique randomized serial ID each time
+  const [serialTimestamp, setSerialTimestamp] = useState<number>(
+    initialState?.serialTimestamp || Date.now()
+  );
+
   // Photo & Elements state (in 1080×1350 canvas space)
   const [photo, setPhoto] = useState<PhotoConfig>(
     initialState ? initialState.photo : initialTmpl.photo
@@ -118,6 +124,9 @@ export default function CardEditor({
       if (initialState.titleOffset !== undefined) {
         setTitleOffset(initialState.titleOffset);
       }
+      if (initialState.serialTimestamp !== undefined) {
+        setSerialTimestamp(initialState.serialTimestamp);
+      }
     }
   }, [initialState]);
 
@@ -132,11 +141,16 @@ export default function CardEditor({
 
   // Auto-generate title and serial code for preview
   const generatedTitle = generateBuilderTitle(builderName, builderRole, titleOffset);
-  const generatedSerial = generateSerialCode(builderName);
+  const generatedSerial = generateSerialCode(builderName, serialTimestamp);
 
   // Reshuffle title callback
   const handleReshuffleTitle = useCallback(() => {
     setTitleOffset((prev) => prev + 1);
+  }, []);
+
+  // Regenerate serial ID callback (randomize with new timestamp)
+  const handleRegenerateSerial = useCallback(() => {
+    setSerialTimestamp(Date.now() + Math.floor(Math.random() * 1000));
   }, []);
 
   // Preload images whenever croppedPhoto or template changes
@@ -190,6 +204,7 @@ export default function CardEditor({
       photo,
       elements,
       titleOffset,
+      serialTimestamp,
     };
 
     renderCardCanvas(ctx, {
@@ -200,6 +215,7 @@ export default function CardEditor({
       template: selectedTemplate,
       loadedImages,
       titleOffset,
+      serialTimestamp,
     });
   }, [
     loadedImages,
@@ -210,6 +226,7 @@ export default function CardEditor({
     builderRole,
     croppedPhoto,
     titleOffset,
+    serialTimestamp,
   ]);
 
   // Render comparison canvas in dev mode when requested
@@ -236,6 +253,7 @@ export default function CardEditor({
       photo,
       elements,
       titleOffset,
+      serialTimestamp,
     };
 
     renderCardCanvas(ctx, {
@@ -246,6 +264,7 @@ export default function CardEditor({
       template: selectedTemplate,
       loadedImages,
       titleOffset,
+      serialTimestamp,
     });
   }, [
     isDevMode,
@@ -258,6 +277,7 @@ export default function CardEditor({
     builderRole,
     croppedPhoto,
     titleOffset,
+    serialTimestamp,
   ]);
 
   // Drag bookkeeping
@@ -338,9 +358,10 @@ export default function CardEditor({
       photo,
       elements,
       titleOffset,
+      serialTimestamp,
     };
     onGenerate(editorState, selectedTemplate.src, titleOffset);
-  }, [selectedTemplate, photo, elements, titleOffset, onGenerate]);
+  }, [selectedTemplate, photo, elements, titleOffset, serialTimestamp, onGenerate]);
 
   /* ── Dev Mode: Clean Export JSON ── */
   const getExportableJson = useCallback(() => {
@@ -818,6 +839,18 @@ export default function CardEditor({
               🔀 RESHUFFLE TITLE
             </button>
           )}
+
+          {/* Regenerate Serial ID Button when SERIAL, BARCODE, or QRCODE is selected */}
+          {(selectedEl === 'serial' || selectedEl === 'barcode' || selectedEl === 'qrcode') && (
+            <button
+              type="button"
+              onClick={handleRegenerateSerial}
+              className="btn-ink btn-teal"
+              style={{ fontSize: '11px', padding: '4px 10px', boxShadow: 'none' }}
+            >
+              🎲 NEW SERIAL ID
+            </button>
+          )}
         </div>
 
         {/* PHOTO CONTROLS */}
@@ -972,9 +1005,12 @@ export default function CardEditor({
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span className="hhg-label" style={{ margin: 0, color: 'var(--color-text-muted)' }}>
-                COLOR: SOLID BLACK (#000000)
+                SERIAL: {generatedSerial}
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--color-yellow)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+                ● SOLID BLACK (#000000)
               </span>
             </div>
           </div>
