@@ -2,7 +2,7 @@
  * Template registry for HH Goa 2026 Builder ID Cards.
  *
  * Each template PNG has a transparent cutout where the user's photo shows through.
- * Photo is drawn BEHIND the template; text is drawn ON TOP.
+ * Photo is drawn BEHIND the template; text and barcodes are drawn ON TOP.
  *
  * All coordinates are in the 1080×1350 canvas space.
  * EVERY TEMPLATE OWNS ITS OWN POSITIONS, COLORS, AND ALIGNMENTS.
@@ -18,6 +18,14 @@ export interface ElementPosition {
   align: 'left' | 'center' | 'right';
 }
 
+export interface BarcodePosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+}
+
 export interface PhotoConfig {
   x: number;
   y: number;
@@ -26,18 +34,21 @@ export interface PhotoConfig {
   scale: number;
 }
 
+export interface TemplateElements {
+  name: ElementPosition;
+  role: ElementPosition;
+  title: ElementPosition;
+  serial: ElementPosition;
+  hashtag: ElementPosition;
+  barcode: BarcodePosition;
+}
+
 export interface TemplateConfig {
   id: string;
   name: string;
   src: string;
   photo: PhotoConfig;
-  elements: {
-    name: ElementPosition;
-    role: ElementPosition;
-    title: ElementPosition;
-    serial: ElementPosition;
-    hashtag: ElementPosition;
-  };
+  elements: TemplateElements;
   metadata?: {
     width: number;
     height: number;
@@ -46,59 +57,69 @@ export interface TemplateConfig {
 
 export const TEMPLATES: TemplateConfig[] = [
   {
-    id: 'template_1',
-    name: 'Template 1',
-    src: '/templates/template_1.png',
-    metadata: { width: 1080, height: 1350 },
-    photo: {
-      x: 372,
-      y: 454,
-      w: 331,
-      h: 461,
-      scale: 1,
+    "id": "template_1",
+    "name": "Template 1",
+    "src": "/templates/template_1.png",
+    "metadata": {
+      "width": 1080,
+      "height": 1350
     },
-    elements: {
-      name: {
-        x: 540,
-        y: 960,
-        maxWidth: 900,
-        fontSize: 64,
-        fontWeight: 900,
-        color: '#F5E9B8',
-        align: 'center',
-      },
-      role: {
-        x: 540,
-        y: 1040,
-        maxWidth: 860,
-        fontSize: 26,
-        fontWeight: 700,
-        color: '#FFD51C',
-        align: 'center',
-      },
-      title: {
-        x: 540,
-        y: 1110,
-        fontSize: 22,
-        fontWeight: 700,
-        color: '#16B98C',
-        align: 'center',
-      },
-      serial: {
-        x: 70,
-        y: 1280,
-        fontSize: 14,
-        color: '#B7C7A7',
-        align: 'left',
-      },
-      hashtag: {
-        x: 1010,
-        y: 1280,
-        fontSize: 14,
-        color: '#FFD51C',
-        align: 'right',
-      },
+    "photo": {
+      "x": 347,
+      "y": 443,
+      "w": 331,
+      "h": 461,
+      "scale": 1.04
     },
+    "elements": {
+      "name": {
+        "x": 327,
+        "y": 1028,
+        "maxWidth": 900,
+        "fontSize": 39,
+        "fontWeight": 900,
+        "color": "#ffffff",
+        "align": "center"
+      },
+      "role": {
+        "x": 738,
+        "y": 1101,
+        "maxWidth": 860,
+        "fontSize": 35,
+        "fontWeight": 700,
+        "color": "#ffffff",
+        "align": "center"
+      },
+      "title": {
+        "x": 286,
+        "y": 1121,
+        "fontSize": 22,
+        "fontWeight": 700,
+        "color": "#002b0b",
+        "align": "center"
+      },
+      "barcode": {
+        "x": 433,
+        "y": 1223,
+        "w": 180,
+        "h": 50,
+        "color": "#FFD51C"
+      },
+      "serial": {
+        "x": 109,
+        "y": 1251,
+        "fontSize": 26,
+        "color": "#000000",
+        "align": "left"
+      },
+      "hashtag": {
+        "x": 967,
+        "y": 1319,
+        "fontSize": 0,
+        "color": "#000000",
+        "align": "right"
+      }
+    }
   },
   {
     id: 'template_2',
@@ -115,7 +136,7 @@ export const TEMPLATES: TemplateConfig[] = [
     elements: {
       name: {
         x: 540,
-        y: 920,
+        y: 910,
         maxWidth: 900,
         fontSize: 60,
         fontWeight: 900,
@@ -124,7 +145,7 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       role: {
         x: 540,
-        y: 1000,
+        y: 990,
         maxWidth: 860,
         fontSize: 26,
         fontWeight: 700,
@@ -133,22 +154,29 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       title: {
         x: 540,
-        y: 1070,
+        y: 1055,
         fontSize: 22,
         fontWeight: 700,
         color: '#16B98C',
         align: 'center',
       },
+      barcode: {
+        x: 430,
+        y: 1115,
+        w: 220,
+        h: 40,
+        color: '#FFD51C',
+      },
       serial: {
         x: 80,
-        y: 1230,
+        y: 1220,
         fontSize: 14,
         color: '#B7C7A7',
         align: 'left',
       },
       hashtag: {
         x: 1000,
-        y: 1230,
+        y: 1220,
         fontSize: 14,
         color: '#FFD51C',
         align: 'right',
@@ -170,7 +198,7 @@ export const TEMPLATES: TemplateConfig[] = [
     elements: {
       name: {
         x: 70,
-        y: 1000,
+        y: 980,
         maxWidth: 940,
         fontSize: 60,
         fontWeight: 900,
@@ -179,7 +207,7 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       role: {
         x: 70,
-        y: 1075,
+        y: 1055,
         maxWidth: 940,
         fontSize: 26,
         fontWeight: 700,
@@ -188,22 +216,29 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       title: {
         x: 70,
-        y: 1140,
+        y: 1120,
         fontSize: 22,
         fontWeight: 700,
         color: '#16B98C',
         align: 'left',
       },
+      barcode: {
+        x: 70,
+        y: 1175,
+        w: 220,
+        h: 40,
+        color: '#FFD51C',
+      },
       serial: {
         x: 70,
-        y: 1260,
+        y: 1250,
         fontSize: 14,
         color: '#B7C7A7',
         align: 'left',
       },
       hashtag: {
         x: 1010,
-        y: 1260,
+        y: 1250,
         fontSize: 14,
         color: '#FFD51C',
         align: 'right',
@@ -225,7 +260,7 @@ export const TEMPLATES: TemplateConfig[] = [
     elements: {
       name: {
         x: 540,
-        y: 920,
+        y: 910,
         maxWidth: 900,
         fontSize: 60,
         fontWeight: 900,
@@ -234,7 +269,7 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       role: {
         x: 540,
-        y: 990,
+        y: 980,
         maxWidth: 860,
         fontSize: 26,
         fontWeight: 700,
@@ -243,79 +278,31 @@ export const TEMPLATES: TemplateConfig[] = [
       },
       title: {
         x: 540,
-        y: 1060,
+        y: 1045,
         fontSize: 22,
         fontWeight: 700,
         color: '#16B98C',
         align: 'center',
       },
+      barcode: {
+        x: 430,
+        y: 1105,
+        w: 220,
+        h: 40,
+        color: '#FFD51C',
+      },
       serial: {
         x: 80,
-        y: 1220,
+        y: 1210,
         fontSize: 14,
         color: '#B7C7A7',
         align: 'left',
       },
       hashtag: {
         x: 1000,
-        y: 1220,
+        y: 1210,
         fontSize: 14,
         color: '#FFD51C',
-        align: 'right',
-      },
-    },
-  },
-  {
-    id: 'template_5',
-    name: 'Template 5',
-    src: '/templates/templete_5.png',
-    metadata: { width: 1080, height: 1350 },
-    photo: {
-      x: 370,
-      y: 375,
-      w: 342,
-      h: 483,
-      scale: 1,
-    },
-    elements: {
-      name: {
-        x: 540,
-        y: 920,
-        maxWidth: 900,
-        fontSize: 60,
-        fontWeight: 900,
-        color: '#063D2B',
-        align: 'center',
-      },
-      role: {
-        x: 540,
-        y: 990,
-        maxWidth: 860,
-        fontSize: 26,
-        fontWeight: 700,
-        color: '#F71969',
-        align: 'center',
-      },
-      title: {
-        x: 540,
-        y: 1060,
-        fontSize: 22,
-        fontWeight: 700,
-        color: '#063D2B',
-        align: 'center',
-      },
-      serial: {
-        x: 80,
-        y: 1220,
-        fontSize: 14,
-        color: '#063D2B',
-        align: 'left',
-      },
-      hashtag: {
-        x: 1000,
-        y: 1220,
-        fontSize: 14,
-        color: '#F71969',
         align: 'right',
       },
     },

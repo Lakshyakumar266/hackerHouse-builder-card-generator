@@ -21,6 +21,7 @@ export default function App() {
   const [stage, setStage] = useState<Stage>('hero');
   const [croppedPhoto, setCroppedPhoto] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [savedEditorState, setSavedEditorState] = useState<EditorState | null>(null);
   const [cardDataUrl, setCardDataUrl] = useState<string | null>(null);
   const [builderName, setBuilderName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -42,6 +43,7 @@ export default function App() {
     async (editorState: EditorState, templateSrc: string) => {
       if (!croppedPhoto || !formData) return;
       setIsGenerating(true);
+      setSavedEditorState(editorState); // Retain custom user editor state
       try {
         const builderData: BuilderData = {
           name: formData.name,
@@ -63,6 +65,7 @@ export default function App() {
   const handleReset = useCallback(() => {
     setCroppedPhoto(null);
     setFormData(null);
+    setSavedEditorState(null);
     setCardDataUrl(null);
     setBuilderName('');
     setStage('hero');
@@ -380,6 +383,7 @@ export default function App() {
                 croppedPhoto={croppedPhoto}
                 builderName={formData.name}
                 builderRole={formData.whatYouBuild}
+                initialState={savedEditorState}
                 onGenerate={handleGenerate}
                 onBack={() => setStage('form')}
                 isGenerating={isGenerating}

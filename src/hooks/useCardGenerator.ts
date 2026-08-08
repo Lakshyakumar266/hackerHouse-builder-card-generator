@@ -82,7 +82,39 @@ function clearShadow(ctx: CanvasRenderingContext2D) {
   ctx.shadowOffsetY = 0;
 }
 
-/* ── Main hook ───────────────────────────────────────────────────────────── */
+/** Draws a barcode graphic directly on Canvas using serial string + barcode bounds */
+function drawBarcodeOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  codeStr: string
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+
+  const numBars = 36;
+  const unit = w / (numBars * 1.6);
+  let curX = x;
+
+  for (let i = 0; i < numBars; i++) {
+    const charCode = codeStr.charCodeAt(i % codeStr.length) || 65;
+    const isGap = (charCode + i * 3) % 5 === 0 && i > 1 && i < numBars - 2;
+    const isWide = (charCode + i * 7) % 3 === 0;
+    const barW = isWide ? unit * 2.2 : unit * 1.1;
+
+    if (!isGap) {
+      ctx.fillRect(curX, y, barW, h);
+    }
+    curX += barW + unit * 0.5;
+  }
+
+  ctx.restore();
+}
+
+/* ── Main Hook ───────────────────────────────────────────────────────────── */
 
 export function useCardGenerator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -148,8 +180,10 @@ export function useCardGenerator() {
       ctx.drawImage(templateImg, 0, 0, CARD_W, CARD_H);
 
       /* ────────────────────────────────────────────────────────────────────
-       * LAYER 3: Dynamic Text — ON TOP of template
+       * LAYER 3: Dynamic Text & Barcode — ON TOP of template
+       * Set textBaseline = 'top' so Canvas matches DOM preview 1:1!
        * ─────────────────────────────────────────────────────────────────── */
+      ctx.textBaseline = 'top';
 
       // ── 1. NAME
       const nameElem = elements.name;
@@ -167,6 +201,21 @@ export function useCardGenerator() {
       setShadow(ctx, 10);
       ctx.fillText(name.toUpperCase(), nameElem.x, nameElem.y);
       clearShadow(ctx);
+
+      // Underline
+      ctx.textAlign = 'left';
+      const nameTextW = ctx.measureText(name.toUpperCase()).width;
+      let underlineX = nameElem.x;
+      if (nameElem.align === 'center') underlineX = nameElem.x - nameTextW / 2;
+      if (nameElem.align === 'right') underlineX = nameElem.x - nameTextW;
+
+      ctx.fillStyle = '#FFD51C';
+      ctx.fillRect(
+        underlineX,
+        nameElem.y + nameFontSize + 6,
+        Math.min(nameTextW, nameElem.maxWidth || 900),
+        5
+      );
 
       // ── 2. ROLE ("What do you build?")
       const roleElem = elements.role;
@@ -195,14 +244,20 @@ export function useCardGenerator() {
       ctx.fillText(`"${title}"`, titleElem.x, titleElem.y);
       clearShadow(ctx);
 
-      // ── 4. SERIAL CODE
+      // ── 4. BARCODE GRAPHIC
+      if (elements.barcode) {
+        const bc = elements.barcode;
+        drawBarcodeOnCanvas(ctx, bc.x, bc.y, bc.w, bc.h, bc.color, serial);
+      }
+
+      // ── 5. SERIAL CODE
       const serialElem = elements.serial;
       ctx.font = `${serialElem.fontWeight || 400} ${serialElem.fontSize || 14}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = serialElem.color;
       ctx.textAlign = serialElem.align;
       ctx.fillText(serial, serialElem.x, serialElem.y);
 
-      // ── 5. HASHTAG
+      // ── 6. HASHTAG
       const hashElem = elements.hashtag;
       ctx.font = `${hashElem.fontWeight || 700} ${hashElem.fontSize || 14}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = hashElem.color;
@@ -210,6 +265,7 @@ export function useCardGenerator() {
       ctx.fillText('#HHGoa2026', hashElem.x, hashElem.y);
 
       ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
 
       return canvas.toDataURL('image/png', 0.96);
     },

@@ -1,9 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   TEMPLATES,
   type TemplateConfig,
   type ElementPosition,
+  type BarcodePosition,
   type PhotoConfig,
 } from '../lib/templateConfig';
 import { generateBuilderTitle, generateSerialCode } from '../lib/builderTitle';
@@ -16,6 +17,7 @@ export interface EditorElements {
   title: ElementPosition;
   serial: ElementPosition;
   hashtag: ElementPosition;
+  barcode: BarcodePosition;
 }
 
 export interface EditorState {
@@ -24,12 +26,20 @@ export interface EditorState {
   elements: EditorElements;
 }
 
-export type DragTarget = 'photo' | 'name' | 'role' | 'title' | 'serial' | 'hashtag';
+export type DragTarget =
+  | 'photo'
+  | 'name'
+  | 'role'
+  | 'title'
+  | 'serial'
+  | 'hashtag'
+  | 'barcode';
 
 interface Props {
   croppedPhoto: string;
   builderName: string;
   builderRole: string;
+  initialState?: EditorState | null;
   onGenerate: (state: EditorState, templateSrc: string) => void;
   onBack: () => void;
   isGenerating: boolean;
@@ -47,6 +57,7 @@ export default function CardEditor({
   croppedPhoto,
   builderName,
   builderRole,
+  initialState,
   onGenerate,
   onBack,
   isGenerating,
@@ -57,11 +68,31 @@ export default function CardEditor({
     (window.location.search.includes('dev=1') ||
       import.meta.env.VITE_CARD_DEV_MODE === 'true');
 
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig>(TEMPLATES[0]);
+  // Find initial template or default
+  const initialTmpl =
+    initialState
+      ? TEMPLATES.find((t) => t.id === initialState.templateId) || TEMPLATES[0]
+      : TEMPLATES[0];
+
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateConfig>(initialTmpl);
 
   // Photo & Elements state (in 1080×1350 canvas space)
-  const [photo, setPhoto] = useState<PhotoConfig>(TEMPLATES[0].photo);
-  const [elements, setElements] = useState<EditorElements>(TEMPLATES[0].elements);
+  const [photo, setPhoto] = useState<PhotoConfig>(
+    initialState ? initialState.photo : initialTmpl.photo
+  );
+  const [elements, setElements] = useState<EditorElements>(
+    initialState ? initialState.elements : initialTmpl.elements
+  );
+
+  // If initialState changes from props (e.g. re-navigating), apply it
+  useEffect(() => {
+    if (initialState) {
+      const tmpl = TEMPLATES.find((t) => t.id === initialState.templateId) || TEMPLATES[0];
+      setSelectedTemplate(tmpl);
+      setPhoto({ ...initialState.photo });
+      setElements(JSON.parse(JSON.stringify(initialState.elements)));
+    }
+  }, [initialState]);
 
   // Selection & Drag state
   const [selectedEl, setSelectedEl] = useState<DragTarget>('photo');
@@ -218,7 +249,9 @@ export default function CardEditor({
 
   // Currently selected element for controls editing
   const selectedTextElem =
-    selectedEl !== 'photo' ? elements[selectedEl as keyof EditorElements] : null;
+    selectedEl !== 'photo' && selectedEl !== 'barcode'
+      ? (elements[selectedEl as keyof EditorElements] as ElementPosition)
+      : null;
 
   return (
     <motion.div
@@ -346,28 +379,30 @@ export default function CardEditor({
           SELECT ELEMENT TO MOVE
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
-          {(['photo', 'name', 'role', 'title', 'serial', 'hashtag'] as DragTarget[]).map((el) => (
-            <button
-              key={el}
-              onClick={() => setSelectedEl(el)}
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '11px',
-                letterSpacing: '0.12em',
-                padding: '6px 14px',
-                cursor: 'pointer',
-                border: '2px solid',
-                borderColor:
-                  selectedEl === el ? 'var(--color-yellow)' : 'var(--color-border)',
-                background: selectedEl === el ? 'var(--color-yellow)' : 'transparent',
-                color: selectedEl === el ? 'var(--color-dark)' : 'var(--color-text-muted)',
-                transition: 'all 0.15s',
-              }}
-            >
-              {el.toUpperCase()}
-            </button>
-          ))}
+          {(['photo', 'name', 'role', 'title', 'barcode', 'serial', 'hashtag'] as DragTarget[]).map(
+            (el) => (
+              <button
+                key={el}
+                onClick={() => setSelectedEl(el)}
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '11px',
+                  letterSpacing: '0.12em',
+                  padding: '6px 14px',
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  borderColor:
+                    selectedEl === el ? 'var(--color-yellow)' : 'var(--color-border)',
+                  background: selectedEl === el ? 'var(--color-yellow)' : 'transparent',
+                  color: selectedEl === el ? 'var(--color-dark)' : 'var(--color-text-muted)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {el.toUpperCase()}
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -428,14 +463,15 @@ export default function CardEditor({
           />
 
           {/* ──────────────────────────────────────────────────────────────────
-           * LAYER 3: Dynamic Text Elements — ON TOP of template
+           * LAYER 3: Dynamic Text Elements & Barcode — ON TOP of template
+           * Match Canvas textBaseline = 'top' by setting top: e.y * SCALE!
            * ───────────────────────────────────────────────────────────────── */}
 
           {/* 1. NAME */}
           {(() => {
             const e = elements.name;
             const px = e.x * SCALE;
-            const py = (e.y - (e.fontSize || 64) * 0.7) * SCALE;
+            const py = e.y * SCALE;
             const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
 
             return (
@@ -446,7 +482,8 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '2px 6px',
+                  padding: '0 4px',
+                  lineHeight: 1,
                   background:
                     activeEl === 'name' || selectedEl === 'name'
                       ? 'rgba(255, 213, 28, 0.2)'
@@ -463,6 +500,7 @@ export default function CardEditor({
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
+                    lineHeight: 1,
                   }}
                 >
                   {builderName.toUpperCase() || 'YOUR NAME'}
@@ -476,7 +514,7 @@ export default function CardEditor({
           {(() => {
             const e = elements.role;
             const px = e.x * SCALE;
-            const py = (e.y - (e.fontSize || 26) * 0.7) * SCALE;
+            const py = e.y * SCALE;
             const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
 
             return (
@@ -487,8 +525,9 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '2px 6px',
+                  padding: '0 4px',
                   maxWidth: (e.maxWidth || 860) * SCALE,
+                  lineHeight: 1,
                   background:
                     activeEl === 'role' || selectedEl === 'role'
                       ? 'rgba(255, 213, 28, 0.2)'
@@ -505,6 +544,7 @@ export default function CardEditor({
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
+                    lineHeight: 1.25,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                   }}
@@ -520,7 +560,7 @@ export default function CardEditor({
           {(() => {
             const e = elements.title;
             const px = e.x * SCALE;
-            const py = (e.y - (e.fontSize || 22) * 0.7) * SCALE;
+            const py = e.y * SCALE;
             const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
 
             return (
@@ -531,7 +571,8 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '2px 6px',
+                  padding: '0 4px',
+                  lineHeight: 1,
                   background:
                     activeEl === 'title' || selectedEl === 'title'
                       ? 'rgba(255, 213, 28, 0.2)'
@@ -548,6 +589,7 @@ export default function CardEditor({
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
+                    lineHeight: 1,
                   }}
                 >
                   "{generatedTitle}"
@@ -557,11 +599,61 @@ export default function CardEditor({
             );
           })()}
 
-          {/* 4. SERIAL */}
+          {/* 4. BARCODE */}
+          {(() => {
+            const bc = elements.barcode || { x: 430, y: 1170, w: 220, h: 44, color: '#FFD51C' };
+            const px = bc.x * SCALE;
+            const py = bc.y * SCALE;
+            const pw = bc.w * SCALE;
+            const ph = bc.h * SCALE;
+
+            return (
+              <div
+                onPointerDown={(evt) => startDrag(evt, 'barcode', bc.x, bc.y)}
+                style={{
+                  ...getElementStyle('barcode'),
+                  left: px,
+                  top: py,
+                  width: pw,
+                  height: ph,
+                  padding: '2px',
+                  background:
+                    activeEl === 'barcode' || selectedEl === 'barcode'
+                      ? 'rgba(255, 213, 28, 0.25)'
+                      : 'transparent',
+                }}
+              >
+                {/* SVG Barcode Preview matching Canvas barcode renderer */}
+                <svg width="100%" height="100%" viewBox={`0 0 ${bc.w} ${bc.h}`}>
+                  {Array.from({ length: 36 }).map((_, idx) => {
+                    const charCode = generatedSerial.charCodeAt(idx % generatedSerial.length) || 65;
+                    const isGap = (charCode + idx * 3) % 5 === 0 && idx > 1 && idx < 34;
+                    const isWide = (charCode + idx * 7) % 3 === 0;
+                    const unit = bc.w / (36 * 1.6);
+                    const barW = isWide ? unit * 2.2 : unit * 1.1;
+
+                    // Calculate X position
+                    let curX = 0;
+                    for (let j = 0; j < idx; j++) {
+                      const c = generatedSerial.charCodeAt(j % generatedSerial.length) || 65;
+                      const w = (c + j * 7) % 3 === 0 ? unit * 2.2 : unit * 1.1;
+                      curX += w + unit * 0.5;
+                    }
+
+                    if (isGap) return null;
+                    return <rect key={idx} x={curX} y={0} width={barW} height={bc.h} fill={bc.color} />;
+                  })}
+                </svg>
+                {selectedEl === 'barcode' && <BadgeLabel>BARCODE</BadgeLabel>}
+              </div>
+            );
+          })()}
+
+          {/* 5. SERIAL */}
           {(() => {
             const e = elements.serial;
             const px = e.x * SCALE;
-            const py = (e.y - (e.fontSize || 14) * 0.7) * SCALE;
+            const py = e.y * SCALE;
             const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
 
             return (
@@ -572,7 +664,8 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '2px 6px',
+                  padding: '0 4px',
+                  lineHeight: 1,
                   background:
                     activeEl === 'serial' || selectedEl === 'serial'
                       ? 'rgba(255, 213, 28, 0.2)'
@@ -588,6 +681,7 @@ export default function CardEditor({
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
+                    lineHeight: 1,
                   }}
                 >
                   {generatedSerial}
@@ -597,11 +691,11 @@ export default function CardEditor({
             );
           })()}
 
-          {/* 5. HASHTAG */}
+          {/* 6. HASHTAG */}
           {(() => {
             const e = elements.hashtag;
             const px = e.x * SCALE;
-            const py = (e.y - (e.fontSize || 14) * 0.7) * SCALE;
+            const py = e.y * SCALE;
             const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
 
             return (
@@ -612,7 +706,8 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '2px 6px',
+                  padding: '0 4px',
+                  lineHeight: 1,
                   background:
                     activeEl === 'hashtag' || selectedEl === 'hashtag'
                       ? 'rgba(255, 213, 28, 0.2)'
@@ -628,6 +723,7 @@ export default function CardEditor({
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
+                    lineHeight: 1,
                   }}
                 >
                   #HHGoa2026
@@ -731,6 +827,115 @@ export default function CardEditor({
                 }
                 style={{ width: '100%', accentColor: 'var(--color-yellow)' }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* BARCODE CONTROLS */}
+        {selectedEl === 'barcode' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-3)' }}>
+              <div>
+                <label className="hhg-label">POSITION X</label>
+                <input
+                  type="number"
+                  className="hhg-input"
+                  value={elements.barcode.x}
+                  onChange={(evt) => {
+                    const nx = Number(evt.target.value);
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, x: nx },
+                    }));
+                  }}
+                />
+              </div>
+              <div>
+                <label className="hhg-label">POSITION Y</label>
+                <input
+                  type="number"
+                  className="hhg-input"
+                  value={elements.barcode.y}
+                  onChange={(evt) => {
+                    const ny = Number(evt.target.value);
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, y: ny },
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-3)' }}>
+              <div>
+                <label className="hhg-label">BARCODE WIDTH</label>
+                <input
+                  type="number"
+                  className="hhg-input"
+                  value={elements.barcode.w}
+                  onChange={(evt) => {
+                    const nw = Number(evt.target.value);
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, w: nw },
+                    }));
+                  }}
+                />
+              </div>
+              <div>
+                <label className="hhg-label">BARCODE HEIGHT</label>
+                <input
+                  type="number"
+                  className="hhg-input"
+                  value={elements.barcode.h}
+                  onChange={(evt) => {
+                    const nh = Number(evt.target.value);
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, h: nh },
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="hhg-label">COLOR</label>
+              <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center' }}>
+                <input
+                  type="color"
+                  value={elements.barcode.color}
+                  onChange={(evt) => {
+                    const nc = evt.target.value;
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, color: nc },
+                    }));
+                  }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    padding: 0,
+                    border: '1px solid var(--color-border)',
+                    cursor: 'pointer',
+                    background: 'none',
+                  }}
+                />
+                <input
+                  type="text"
+                  className="hhg-input"
+                  value={elements.barcode.color}
+                  onChange={(evt) => {
+                    const nc = evt.target.value;
+                    setElements((prev) => ({
+                      ...prev,
+                      barcode: { ...prev.barcode, color: nc },
+                    }));
+                  }}
+                  style={{ fontSize: '13px', padding: '8px 10px' }}
+                />
+              </div>
             </div>
           </div>
         )}
