@@ -2,21 +2,40 @@
  * Hallmark · component: SharePanel · all token refs via var()
  */
 import { motion } from 'motion/react';
-import { openXShare } from '../lib/xShare';
 
 interface Props {
   dataUrl: string;
-  name: string;
+  name?: string;
+  filename?: string;
+  captionText?: string;
   onCreateAnother: () => void;
 }
 
-export default function SharePanel({ dataUrl, name, onCreateAnother }: Props) {
+export default function SharePanel({
+  dataUrl,
+  name,
+  filename,
+  captionText,
+  onCreateAnother,
+}: Props) {
+  const defaultFilename = name
+    ? `hh-goa-2026-${name.toLowerCase().replace(/\s+/g, '-')}.png`
+    : 'hh-goa-2026-pfp-frame.png';
+
+  const downloadName = filename || defaultFilename;
+
   const handleDownload = () => {
     const link = document.createElement('a');
-    const safeName = name.toLowerCase().replace(/\s+/g, '-') || 'builder';
-    link.download = `hh-goa-2026-${safeName}.png`;
+    link.download = downloadName;
     link.href = dataUrl;
     link.click();
+  };
+
+  const handleOpenX = () => {
+    const tweetText = encodeURIComponent(
+      captionText || 'Building in Goa. See you at HH Goa 2026. 🌴 #HHGoa2026 #FrameInGoa'
+    );
+    window.open(`https://x.com/intent/tweet?text=${tweetText}`, '_blank');
   };
 
   return (
@@ -50,7 +69,7 @@ export default function SharePanel({ dataUrl, name, onCreateAnother }: Props) {
       <button
         id="share-x-btn"
         className="btn-ink"
-        onClick={openXShare}
+        onClick={handleOpenX}
         style={{
           fontSize: '14px',
           padding: '18px var(--sp-6)',
@@ -112,7 +131,7 @@ export default function SharePanel({ dataUrl, name, onCreateAnother }: Props) {
             marginBottom: 'var(--sp-2)',
           }}
         >
-          Download your card → Post on X with caption:
+          Download your asset → Post on X with caption:
         </p>
         <p
           style={{
@@ -122,7 +141,7 @@ export default function SharePanel({ dataUrl, name, onCreateAnother }: Props) {
             lineHeight: 1.75,
           }}
         >
-          Building in Goa. See you at HH Goa 2026. 🌴
+          {captionText || 'Building in Goa. See you at HH Goa 2026. 🌴'}
           <br />
           <span
             style={{

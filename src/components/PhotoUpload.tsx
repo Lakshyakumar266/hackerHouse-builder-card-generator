@@ -10,6 +10,7 @@ import { convertHeicToDataUrl } from '../lib/heicConvert';
 
 interface Props {
   onCropComplete: (croppedDataUrl: string) => void;
+  aspect?: number;
 }
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
@@ -27,7 +28,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
   return canvas.toDataURL('image/png', 0.95);
 }
 
-export default function PhotoUpload({ onCropComplete }: Props) {
+export default function PhotoUpload({ onCropComplete, aspect = 1080 / 1350 }: Props) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -236,7 +237,7 @@ export default function PhotoUpload({ onCropComplete }: Props) {
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={1080 / 1350}
+                aspect={aspect}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}

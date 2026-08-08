@@ -5,9 +5,15 @@ import { motion } from 'motion/react';
 
 interface Props {
   dataUrl: string;
+  aspectRatio?: number; // Defaults to 1350 / 1080 for ID Card
+  dimensionLabel?: string; // Defaults to "1080 × 1350 · PNG"
 }
 
-export default function CardPreview({ dataUrl }: Props) {
+export default function CardPreview({
+  dataUrl,
+  aspectRatio = 1350 / 1080,
+  dimensionLabel = '1080 × 1350 · PNG',
+}: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.88, y: 28 }}
@@ -20,7 +26,7 @@ export default function CardPreview({ dataUrl }: Props) {
         alignItems: 'center',
       }}
     >
-      {/* Offset-shadow frame — echoes the card's own dual-border */}
+      {/* Offset-shadow frame — echoes the asset's dual-border */}
       <div
         style={{
           position: 'relative',
@@ -47,11 +53,11 @@ export default function CardPreview({ dataUrl }: Props) {
             outline: '2px solid var(--color-yellow)',
           }}
         >
-          {/* 1080:1350 aspect ratio container */}
-          <div style={{ paddingTop: `${(1350 / 1080) * 100}%`, position: 'relative' }}>
+          {/* Dynamic aspect ratio container */}
+          <div style={{ paddingTop: `${aspectRatio * 100}%`, position: 'relative' }}>
             <img
               src={dataUrl}
-              alt="Your HH Goa 2026 Builder ID Card"
+              alt="Your HH Goa 2026 Asset"
               style={{
                 position: 'absolute',
                 inset: 0,
@@ -80,7 +86,7 @@ export default function CardPreview({ dataUrl }: Props) {
           fontStyle: 'normal',
         }}
       >
-        1080 × 1350 · PNG
+        {dimensionLabel}
       </motion.p>
     </motion.div>
   );
