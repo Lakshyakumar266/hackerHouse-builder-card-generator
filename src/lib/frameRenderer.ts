@@ -6,7 +6,6 @@
 import { ensureFontsLoaded, loadImage } from './cardRenderer';
 import hackerHouseLogo from '../assets/Hacker house.png';
 import goaHindi from '../assets/goa_hindi.svg';
-import studioLogo from '../assets/2-47.svg';
 
 export interface FramePhotoConfig {
   x: number;     // offset relative to center (0 default)
@@ -18,7 +17,6 @@ export interface FrameLoadedImages {
   photoImg: HTMLImageElement;
   logoImg: HTMLImageElement;
   goaImg: HTMLImageElement;
-  studioImg: HTMLImageElement;
 }
 
 export type FrameShape = 'square' | 'oval';
@@ -37,13 +35,12 @@ export interface RenderFrameOptions {
 /** Preload all brand assets required for Frame rendering */
 export async function preloadFrameAssets(photoDataUrl: string): Promise<FrameLoadedImages> {
   await ensureFontsLoaded();
-  const [photoImg, logoImg, goaImg, studioImg] = await Promise.all([
+  const [photoImg, logoImg, goaImg] = await Promise.all([
     loadImage(photoDataUrl),
     loadImage(hackerHouseLogo),
     loadImage(goaHindi),
-    loadImage(studioLogo),
   ]);
-  return { photoImg, logoImg, goaImg, studioImg };
+  return { photoImg, logoImg, goaImg };
 }
 
 /** Helper function to render curved text along a circular arc */
@@ -227,25 +224,24 @@ export function renderFrameCanvas(
     ctx.textBaseline = 'top';
     ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 936);
 
-    // 2:47 PM Studio Logo Branding in Bottom Banner Center
-    if (loadedImages?.studioImg) {
-      const studio = loadedImages.studioImg;
-      const studioW = 86;
-      const studioH = (studio.height / studio.width) * studioW;
-      ctx.drawImage(studio, 540 - studioW / 2, 970, studioW, studioH);
-    }
+    // 2:47 PM Studio Text in Bottom Banner Center (No SVG image)
+    ctx.fillStyle = accentColor;
+    ctx.font = '700 13px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('2:47 PM STUDIO  ◆  BUILD  ◆  SHIP  ◆  SIGNAL', 540, 970);
 
     // Curved Arch Text along Top & Bottom Perimeter Rings
     ctx.fillStyle = accentColor;
     ctx.font = '900 13px "Space Grotesk", sans-serif';
     drawArcText(
       ctx,
-      '★ HACKER HOUSE GOA 2026 ★ BUILDER RESIDENCY ★',
+      '★ HACKER HOUSE GOA 2026 ★ BUILDER RESIDENCY ★ 2:47 PM STUDIO ★',
       540,
       540,
       432,
-      Math.PI * 1.25,
-      Math.PI * 1.75,
+      Math.PI * 1.20,
+      Math.PI * 1.80,
       true
     );
 
@@ -390,7 +386,7 @@ export function renderFrameCanvas(
       ctx.restore();
     }
 
-    // Bottom Footer Banner Box (Spans 160 to 920)
+    // Bottom Footer Banner Box (Spans 140 to 940)
     ctx.fillStyle = '#063D2B';
     ctx.fillRect(140, 924, 800, 96);
     ctx.strokeStyle = accentColor;
@@ -408,16 +404,7 @@ export function renderFrameCanvas(
 
     ctx.fillStyle = accentColor;
     ctx.font = '700 13px "Space Grotesk", sans-serif';
-    ctx.fillText('BUILD  ◆  SHIP  ◆  SIGNAL  ◆  DEPLOY  ◆  MERGE  ◆  ITERATE', 540, 972);
-
-    // 2:47 PM Studio Logo Mark in Center Left of Footer Banner
-    if (loadedImages?.studioImg) {
-      const studio = loadedImages.studioImg;
-      const studioW = 80;
-      const studioH = (studio.height / studio.width) * studioW;
-      // Draw 2:47 PM studio mark prominently inside bottom banner right area
-      ctx.drawImage(studio, 830, 942, studioW, studioH);
-    }
+    ctx.fillText('2:47 PM STUDIO  ◆  BUILD  ◆  SHIP  ◆  SIGNAL  ◆  DEPLOY  ◆  MERGE', 540, 972);
 
     ctx.save();
     ctx.translate(38, 540);
@@ -434,7 +421,7 @@ export function renderFrameCanvas(
     ctx.fillStyle = accentColor;
     ctx.font = '700 12px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('28-31 OCT 2026 · GOA RESIDENCY', 0, 0);
+    ctx.fillText('28-31 OCT 2026 · 2:47 PM STUDIO', 0, 0);
     ctx.restore();
   }
 
