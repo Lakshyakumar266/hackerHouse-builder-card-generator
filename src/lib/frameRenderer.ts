@@ -46,6 +46,39 @@ export async function preloadFrameAssets(photoDataUrl: string): Promise<FrameLoa
   return { photoImg, logoImg, goaImg, studioImg };
 }
 
+/** Helper function to render curved text along a circular arc */
+function drawArcText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  startAngleRad: number,
+  endAngleRad: number,
+  clockwise = true
+) {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const numChars = text.length;
+  if (numChars === 0) return;
+  const angleRange = endAngleRad - startAngleRad;
+  const step = numChars > 1 ? angleRange / (numChars - 1) : 0;
+
+  for (let i = 0; i < numChars; i++) {
+    const angle = startAngleRad + i * step;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle + (clockwise ? Math.PI / 2 : -Math.PI / 2));
+    ctx.fillText(text[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
 /**
  * Single Canonical Frame Renderer
  * Renders at 1080 × 1080 logical resolution.
@@ -92,7 +125,7 @@ export function renderFrameCanvas(
       const centerY = 540 + photoConfig.y;
 
       ctx.beginPath();
-      ctx.arc(540, 540, 410, 0, Math.PI * 2);
+      ctx.arc(540, 540, 400, 0, Math.PI * 2);
       ctx.clip();
 
       ctx.drawImage(img, centerX - drawW / 2, centerY - drawH / 2, drawW, drawH);
@@ -125,21 +158,21 @@ export function renderFrameCanvas(
     ctx.lineWidth = 8;
     ctx.strokeStyle = accentColor;
     ctx.beginPath();
-    ctx.arc(540, 540, 412, 0, Math.PI * 2);
+    ctx.arc(540, 540, 402, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.lineWidth = 3;
     ctx.strokeStyle = '#09251C';
     ctx.beginPath();
-    ctx.arc(540, 540, 416, 0, Math.PI * 2);
+    ctx.arc(540, 540, 406, 0, Math.PI * 2);
     ctx.stroke();
 
     // 4. Top & Bottom Curved Arch Banners
-    // Top Arch Banner Box (Dark Forest backdrop for logo)
+    // Top Arch Banner Box
     ctx.save();
     ctx.beginPath();
-    ctx.arc(540, 540, 460, Math.PI * 1.25, Math.PI * 1.75);
-    ctx.arc(540, 540, 390, Math.PI * 1.75, Math.PI * 1.25, true);
+    ctx.arc(540, 540, 456, Math.PI * 1.22, Math.PI * 1.78);
+    ctx.arc(540, 540, 380, Math.PI * 1.78, Math.PI * 1.22, true);
     ctx.closePath();
     ctx.fillStyle = '#063D2B';
     ctx.fill();
@@ -151,8 +184,8 @@ export function renderFrameCanvas(
     // Bottom Arch Banner Box
     ctx.save();
     ctx.beginPath();
-    ctx.arc(540, 540, 460, Math.PI * 0.25, Math.PI * 0.75);
-    ctx.arc(540, 540, 390, Math.PI * 0.75, Math.PI * 0.25, true);
+    ctx.arc(540, 540, 456, Math.PI * 0.22, Math.PI * 0.78);
+    ctx.arc(540, 540, 380, Math.PI * 0.78, Math.PI * 0.22, true);
     ctx.closePath();
     ctx.fillStyle = '#063D2B';
     ctx.fill();
@@ -164,17 +197,17 @@ export function renderFrameCanvas(
     // Top Banner Logo & Badge
     if (loadedImages?.logoImg) {
       const logo = loadedImages.logoImg;
-      const logoW = 460;
+      const logoW = 440;
       const logoH = (logo.height / logo.width) * logoW;
-      ctx.drawImage(logo, 540 - logoW / 2, 110, logoW, logoH);
+      ctx.drawImage(logo, 540 - logoW / 2, 106, logoW, logoH);
     }
 
     if (loadedImages?.goaImg) {
       const goa = loadedImages.goaImg;
       ctx.save();
-      ctx.translate(540, 130);
+      ctx.translate(540, 126);
       ctx.rotate((-4 * Math.PI) / 180);
-      const goaW = 74;
+      const goaW = 70;
       const goaH = (goa.height / goa.width) * goaW;
       ctx.drawImage(goa, -goaW / 2, -goaH / 2, goaW, goaH);
       ctx.restore();
@@ -185,20 +218,38 @@ export function renderFrameCanvas(
     ctx.font = 'bold 15px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('GOA, INDIA · 28-31 OCT 2026', 540, 92);
+    ctx.fillText('GOA, INDIA · 28-31 OCT 2026', 540, 88);
 
-    // Bottom Banner Title & Ticker
+    // Bottom Banner Title Text
     ctx.fillStyle = '#FFF4C7';
     ctx.font = '900 22px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 942);
+    ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 936);
 
+    // 2:47 PM Studio Logo Branding in Bottom Banner Center
+    if (loadedImages?.studioImg) {
+      const studio = loadedImages.studioImg;
+      const studioW = 86;
+      const studioH = (studio.height / studio.width) * studioW;
+      ctx.drawImage(studio, 540 - studioW / 2, 970, studioW, studioH);
+    }
+
+    // Curved Arch Text along Top & Bottom Perimeter Rings
     ctx.fillStyle = accentColor;
-    ctx.font = '700 12px "Space Grotesk", sans-serif';
-    ctx.fillText('BUILD  ◆  SHIP  ◆  SIGNAL  ◆  DEPLOY', 540, 974);
+    ctx.font = '900 13px "Space Grotesk", sans-serif';
+    drawArcText(
+      ctx,
+      '★ HACKER HOUSE GOA 2026 ★ BUILDER RESIDENCY ★',
+      540,
+      540,
+      432,
+      Math.PI * 1.25,
+      Math.PI * 1.75,
+      true
+    );
 
-    // 5. Radial Corner Starburst / Crosshair Accents at 45°, 135°, 225°, 315°
+    // 5. Radial Corner Starburst Accents at 45°, 135°, 225°, 315°
     const angles = [
       Math.PI * 0.25,  // Bottom-Right
       Math.PI * 0.75,  // Bottom-Left
@@ -339,31 +390,33 @@ export function renderFrameCanvas(
       ctx.restore();
     }
 
-    // Bottom Footer Banner Box
+    // Bottom Footer Banner Box (Spans 160 to 920)
     ctx.fillStyle = '#063D2B';
-    ctx.fillRect(160, 928, 760, 90);
+    ctx.fillRect(140, 924, 800, 96);
     ctx.strokeStyle = accentColor;
     ctx.lineWidth = 4;
-    ctx.strokeRect(160, 928, 760, 90);
+    ctx.strokeRect(140, 924, 800, 96);
     ctx.strokeStyle = '#09251C';
     ctx.lineWidth = 3;
-    ctx.strokeRect(164, 932, 752, 82);
+    ctx.strokeRect(144, 928, 792, 88);
 
     ctx.fillStyle = '#FFF4C7';
     ctx.font = '900 24px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 942);
+    ctx.fillText('BUILDER PFP · HACKER HOUSE GOA', 540, 938);
 
     ctx.fillStyle = accentColor;
     ctx.font = '700 13px "Space Grotesk", sans-serif';
-    ctx.fillText('BUILD  ◆  SHIP  ◆  SIGNAL  ◆  DEPLOY  ◆  MERGE  ◆  ITERATE', 540, 978);
+    ctx.fillText('BUILD  ◆  SHIP  ◆  SIGNAL  ◆  DEPLOY  ◆  MERGE  ◆  ITERATE', 540, 972);
 
+    // 2:47 PM Studio Logo Mark in Center Left of Footer Banner
     if (loadedImages?.studioImg) {
       const studio = loadedImages.studioImg;
-      const studioW = 90;
+      const studioW = 80;
       const studioH = (studio.height / studio.width) * studioW;
-      ctx.drawImage(studio, 940, 960, studioW, studioH);
+      // Draw 2:47 PM studio mark prominently inside bottom banner right area
+      ctx.drawImage(studio, 830, 942, studioW, studioH);
     }
 
     ctx.save();
