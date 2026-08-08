@@ -321,7 +321,7 @@ export default function Hero({ onStart }: Props) {
               color: 'var(--color-cream)',
             }}
           >
-            MADE WITH ⚡ BY <span style={{ color: 'var(--color-yellow)' }}>LAKSHYA</span>
+            MADE BY <span style={{ color: 'var(--color-yellow)' }}>LAKSHYA KUMAR</span>
           </span>
         </div>
 
