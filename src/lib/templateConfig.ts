@@ -5,123 +5,320 @@
  * Photo is drawn BEHIND the template; text is drawn ON TOP.
  *
  * All coordinates are in the 1080×1350 canvas space.
- * These are GENERIC DEFAULTS — the user will refine them via the visual editor.
+ * EVERY TEMPLATE OWNS ITS OWN POSITIONS, COLORS, AND ALIGNMENTS.
  */
 
-export interface PhotoArea {
-  /** Left edge of the photo area on the 1080×1350 canvas */
+export interface ElementPosition {
   x: number;
-  /** Top edge of the photo area */
   y: number;
-  /** Width of the photo area */
-  w: number;
-  /** Height of the photo area */
-  h: number;
+  maxWidth?: number;
+  fontSize?: number;
+  fontWeight?: number;
+  color: string;
+  align: 'left' | 'center' | 'right';
 }
 
-export interface TextLayout {
-  /** Name line */
-  name: { x: number; y: number; maxWidth: number; color: string; align: 'left' | 'center' | 'right' };
-  /** "What you build" / role line */
-  role: { x: number; y: number; maxWidth: number; color: string; align: 'left' | 'center' | 'right' };
-  /** Stack chips row */
-  stack: { x: number; y: number; color: string; chipBg: string };
-  /** Generated builder title */
-  title: { x: number; y: number; color: string; align: 'left' | 'center' | 'right' };
-  /** Serial + hashtag footer row */
-  footer: { leftX: number; rightX: number; y: number; color: string };
+export interface PhotoConfig {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  scale: number;
 }
 
 export interface TemplateConfig {
   id: string;
-  /** Display name shown in selector */
   name: string;
-  /** Public URL — served from /public/templates/ */
   src: string;
-  /** Default photo position behind the template */
-  photoDefault: PhotoArea;
-  /** Default text layout on top of the template */
-  textLayout: TextLayout;
-  /** 0 = dark text needs light bg (cream), 1 = light text needs dark bg */
-  textMode: 'light' | 'dark';
+  photo: PhotoConfig;
+  elements: {
+    name: ElementPosition;
+    role: ElementPosition;
+    title: ElementPosition;
+    serial: ElementPosition;
+    hashtag: ElementPosition;
+  };
+  metadata?: {
+    width: number;
+    height: number;
+  };
 }
-
-// ── Generic text layout used by all templates until the user refines ───────
-// The card is 1080×1350. These positions put text in the bottom ~200px strip.
-const GENERIC_TEXT: TextLayout = {
-  name: {
-    x: 60, y: 1115,
-    maxWidth: 960,
-    color: '#F5E9B8',   // cream
-    align: 'left',
-  },
-  role: {
-    x: 60, y: 1175,
-    maxWidth: 960,
-    color: '#FFD51C',   // yellow
-    align: 'left',
-  },
-  stack: {
-    x: 60, y: 1215,
-    color: '#16B98C',   // teal
-    chipBg: '#07563B',
-  },
-  title: {
-    x: 1020, y: 1270,
-    color: '#B7C7A7',
-    align: 'right',
-  },
-  footer: {
-    leftX: 60,
-    rightX: 1020,
-    y: 1320,
-    color: '#B7C7A7',
-  },
-};
-
-// ── Generic photo area (covers most of card) ────────────────────────────────
-const GENERIC_PHOTO: PhotoArea = { x: 0, y: 0, w: 1080, h: 1080 };
 
 export const TEMPLATES: TemplateConfig[] = [
   {
     id: 'template_1',
     name: 'Template 1',
     src: '/templates/template_1.png',
-    photoDefault: GENERIC_PHOTO,
-    textLayout: GENERIC_TEXT,
-    textMode: 'light',
+    metadata: { width: 1080, height: 1350 },
+    photo: {
+      x: 372,
+      y: 454,
+      w: 331,
+      h: 461,
+      scale: 1,
+    },
+    elements: {
+      name: {
+        x: 540,
+        y: 960,
+        maxWidth: 900,
+        fontSize: 64,
+        fontWeight: 900,
+        color: '#F5E9B8',
+        align: 'center',
+      },
+      role: {
+        x: 540,
+        y: 1040,
+        maxWidth: 860,
+        fontSize: 26,
+        fontWeight: 700,
+        color: '#FFD51C',
+        align: 'center',
+      },
+      title: {
+        x: 540,
+        y: 1110,
+        fontSize: 22,
+        fontWeight: 700,
+        color: '#16B98C',
+        align: 'center',
+      },
+      serial: {
+        x: 70,
+        y: 1280,
+        fontSize: 14,
+        color: '#B7C7A7',
+        align: 'left',
+      },
+      hashtag: {
+        x: 1010,
+        y: 1280,
+        fontSize: 14,
+        color: '#FFD51C',
+        align: 'right',
+      },
+    },
   },
   {
     id: 'template_2',
     name: 'Template 2',
     src: '/templates/templete_2.png',
-    photoDefault: GENERIC_PHOTO,
-    textLayout: GENERIC_TEXT,
-    textMode: 'light',
+    metadata: { width: 1080, height: 1350 },
+    photo: {
+      x: 329,
+      y: 341,
+      w: 423,
+      h: 527,
+      scale: 1,
+    },
+    elements: {
+      name: {
+        x: 540,
+        y: 920,
+        maxWidth: 900,
+        fontSize: 60,
+        fontWeight: 900,
+        color: '#F5E9B8',
+        align: 'center',
+      },
+      role: {
+        x: 540,
+        y: 1000,
+        maxWidth: 860,
+        fontSize: 26,
+        fontWeight: 700,
+        color: '#FFD51C',
+        align: 'center',
+      },
+      title: {
+        x: 540,
+        y: 1070,
+        fontSize: 22,
+        fontWeight: 700,
+        color: '#16B98C',
+        align: 'center',
+      },
+      serial: {
+        x: 80,
+        y: 1230,
+        fontSize: 14,
+        color: '#B7C7A7',
+        align: 'left',
+      },
+      hashtag: {
+        x: 1000,
+        y: 1230,
+        fontSize: 14,
+        color: '#FFD51C',
+        align: 'right',
+      },
+    },
   },
   {
     id: 'template_3',
     name: 'Template 3',
     src: '/templates/templete_3.png',
-    photoDefault: GENERIC_PHOTO,
-    textLayout: GENERIC_TEXT,
-    textMode: 'light',
+    metadata: { width: 1080, height: 1350 },
+    photo: {
+      x: 285,
+      y: 421,
+      w: 705,
+      h: 500,
+      scale: 1,
+    },
+    elements: {
+      name: {
+        x: 70,
+        y: 1000,
+        maxWidth: 940,
+        fontSize: 60,
+        fontWeight: 900,
+        color: '#F5E9B8',
+        align: 'left',
+      },
+      role: {
+        x: 70,
+        y: 1075,
+        maxWidth: 940,
+        fontSize: 26,
+        fontWeight: 700,
+        color: '#FFD51C',
+        align: 'left',
+      },
+      title: {
+        x: 70,
+        y: 1140,
+        fontSize: 22,
+        fontWeight: 700,
+        color: '#16B98C',
+        align: 'left',
+      },
+      serial: {
+        x: 70,
+        y: 1260,
+        fontSize: 14,
+        color: '#B7C7A7',
+        align: 'left',
+      },
+      hashtag: {
+        x: 1010,
+        y: 1260,
+        fontSize: 14,
+        color: '#FFD51C',
+        align: 'right',
+      },
+    },
   },
   {
     id: 'template_4',
     name: 'Template 4',
     src: '/templates/templete_4.png',
-    photoDefault: GENERIC_PHOTO,
-    textLayout: GENERIC_TEXT,
-    textMode: 'light',
+    metadata: { width: 1080, height: 1350 },
+    photo: {
+      x: 369,
+      y: 374,
+      w: 343,
+      h: 484,
+      scale: 1,
+    },
+    elements: {
+      name: {
+        x: 540,
+        y: 920,
+        maxWidth: 900,
+        fontSize: 60,
+        fontWeight: 900,
+        color: '#F5E9B8',
+        align: 'center',
+      },
+      role: {
+        x: 540,
+        y: 990,
+        maxWidth: 860,
+        fontSize: 26,
+        fontWeight: 700,
+        color: '#FFD51C',
+        align: 'center',
+      },
+      title: {
+        x: 540,
+        y: 1060,
+        fontSize: 22,
+        fontWeight: 700,
+        color: '#16B98C',
+        align: 'center',
+      },
+      serial: {
+        x: 80,
+        y: 1220,
+        fontSize: 14,
+        color: '#B7C7A7',
+        align: 'left',
+      },
+      hashtag: {
+        x: 1000,
+        y: 1220,
+        fontSize: 14,
+        color: '#FFD51C',
+        align: 'right',
+      },
+    },
   },
   {
     id: 'template_5',
     name: 'Template 5',
     src: '/templates/templete_5.png',
-    photoDefault: GENERIC_PHOTO,
-    textLayout: GENERIC_TEXT,
-    textMode: 'light',
+    metadata: { width: 1080, height: 1350 },
+    photo: {
+      x: 370,
+      y: 375,
+      w: 342,
+      h: 483,
+      scale: 1,
+    },
+    elements: {
+      name: {
+        x: 540,
+        y: 920,
+        maxWidth: 900,
+        fontSize: 60,
+        fontWeight: 900,
+        color: '#063D2B',
+        align: 'center',
+      },
+      role: {
+        x: 540,
+        y: 990,
+        maxWidth: 860,
+        fontSize: 26,
+        fontWeight: 700,
+        color: '#F71969',
+        align: 'center',
+      },
+      title: {
+        x: 540,
+        y: 1060,
+        fontSize: 22,
+        fontWeight: 700,
+        color: '#063D2B',
+        align: 'center',
+      },
+      serial: {
+        x: 80,
+        y: 1220,
+        fontSize: 14,
+        color: '#063D2B',
+        align: 'left',
+      },
+      hashtag: {
+        x: 1000,
+        y: 1220,
+        fontSize: 14,
+        color: '#F71969',
+        align: 'right',
+      },
+    },
   },
 ];
 

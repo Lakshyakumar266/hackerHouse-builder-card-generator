@@ -1,14 +1,9 @@
-/*
- * Hallmark · component: BuilderForm · all token refs via var()
- * states: default · hover · focus · active · disabled · loading
- */
 import { useState } from 'react';
 import { motion } from 'motion/react';
 
-interface FormData {
+export interface FormData {
   name: string;
   whatYouBuild: string;
-  stack: string;
 }
 
 interface Props {
@@ -17,7 +12,7 @@ interface Props {
 }
 
 export default function BuilderForm({ onSubmit, isGenerating }: Props) {
-  const [data, setData] = useState<FormData>({ name: '', whatYouBuild: '', stack: '' });
+  const [data, setData] = useState<FormData>({ name: '', whatYouBuild: '' });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +46,7 @@ export default function BuilderForm({ onSubmit, isGenerating }: Props) {
           className="hhg-input"
           placeholder="e.g. Arjun Sharma"
           value={data.name}
-          onChange={(e) => setData(d => ({ ...d, name: e.target.value }))}
+          onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))}
           required
           autoComplete="name"
         />
@@ -68,33 +63,8 @@ export default function BuilderForm({ onSubmit, isGenerating }: Props) {
           className="hhg-input"
           placeholder="e.g. AI tools for developers"
           value={data.whatYouBuild}
-          onChange={(e) => setData(d => ({ ...d, whatYouBuild: e.target.value }))}
+          onChange={(e) => setData((d) => ({ ...d, whatYouBuild: e.target.value }))}
           required
-        />
-      </div>
-
-      {/* Stack */}
-      <div>
-        <label htmlFor="builder-stack" className="hhg-label">
-          YOUR STACK
-          {' '}
-          <span
-            style={{
-              color: 'oklch(76% 0.058 145 / 0.45)',
-              fontWeight: 400,
-              fontStyle: 'normal',
-            }}
-          >
-            / OPTIONAL
-          </span>
-        </label>
-        <input
-          id="builder-stack"
-          type="text"
-          className="hhg-input"
-          placeholder="e.g. React · Rust · Supabase"
-          value={data.stack}
-          onChange={(e) => setData(d => ({ ...d, stack: e.target.value }))}
         />
       </div>
 
@@ -105,9 +75,9 @@ export default function BuilderForm({ onSubmit, isGenerating }: Props) {
         className="btn-ink btn-pink"
         disabled={!canSubmit}
         style={{
-          fontSize: '14px',
+          fontSize: '15px',
           padding: '20px var(--sp-6)',
-          marginTop: 'var(--sp-1)',
+          marginTop: 'var(--sp-2)',
           width: '100%',
         }}
       >
@@ -126,7 +96,7 @@ export default function BuilderForm({ onSubmit, isGenerating }: Props) {
             GENERATING…
           </>
         ) : (
-          'BUILD MY CARD →'
+          'CONTINUE TO EDITOR →'
         )}
       </button>
 

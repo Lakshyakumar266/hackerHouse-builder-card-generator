@@ -5,7 +5,6 @@ import type { EditorState } from '../components/CardEditor';
 export interface BuilderData {
   name: string;
   whatYouBuild: string;
-  stack: string;
   croppedImageDataUrl: string;
 }
 
@@ -30,7 +29,7 @@ function fitFontSize(
   maxWidth: number,
   startSize: number,
   minSize: number,
-  fontWeight = '900'
+  fontWeight = 900
 ): number {
   let size = startSize;
   while (size > minSize) {
@@ -62,16 +61,20 @@ function wrapText(
       line = test;
     }
   }
-  if (line) { ctx.fillText(line, x, currentY); currentY += lineHeight; }
+  if (line) {
+    ctx.fillText(line, x, currentY);
+    currentY += lineHeight;
+  }
   return currentY;
 }
 
-function setShadow(ctx: CanvasRenderingContext2D, blur = 8, color = 'rgba(0,0,0,0.8)') {
+function setShadow(ctx: CanvasRenderingContext2D, blur = 8, color = 'rgba(0,0,0,0.65)') {
   ctx.shadowBlur = blur;
   ctx.shadowColor = color;
   ctx.shadowOffsetX = 1;
   ctx.shadowOffsetY = 2;
 }
+
 function clearShadow(ctx: CanvasRenderingContext2D) {
   ctx.shadowBlur = 0;
   ctx.shadowColor = 'transparent';
@@ -85,7 +88,11 @@ export function useCardGenerator() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const generateCard = useCallback(
-    async (data: BuilderData, editorState: EditorState): Promise<string> => {
+    async (
+      data: BuilderData,
+      editorState: EditorState,
+      templateSrc: string
+    ): Promise<string> => {
       const canvas = canvasRef.current;
       if (!canvas) throw new Error('Canvas not mounted');
 
@@ -93,103 +100,115 @@ export function useCardGenerator() {
       canvas.height = CARD_H;
       const ctx = canvas.getContext('2d')!;
 
-      const { name, whatYouBuild, stack, croppedImageDataUrl } = data;
-      const { template, photo, text } = editorState;
+      const { name, whatYouBuild, croppedImageDataUrl } = data;
+      const { photo, elements } = editorState;
 
       const title = generateBuilderTitle(name, whatYouBuild);
       const serial = generateSerialCode(name);
 
-      /* ── Load images ── */
+      /* ── Load images in parallel ── */
       const [photoImg, templateImg] = await Promise.all([
         loadImage(croppedImageDataUrl),
-        loadImage(template.src),
+        loadImage(templateSrc),
       ]);
 
       /* ── Clear canvas ── */
       ctx.clearRect(0, 0, CARD_W, CARD_H);
 
-      /* ── LAYER 1: Photo — BEHIND the template ── */
+      /* ────────────────────────────────────────────────────────────────────
+       * LAYER 1: User Photo — BEHIND the template
+       * ─────────────────────────────────────────────────────────────────── */
       ctx.save();
+      const photoAreaW = photo.w * photo.scale;
+      const photoAreaH = photo.h * photo.scale;
       const imgAspect = photoImg.naturalWidth / photoImg.naturalHeight;
-      const areaAspect = photo.w / photo.h;
-      let drawW = photo.w;
-      let drawH = photo.h;
+      const areaAspect = photoAreaW / photoAreaH;
+
+      let drawW = photoAreaW;
+      let drawH = photoAreaH;
       let drawX = photo.x;
       let drawY = photo.y;
+
       if (imgAspect > areaAspect) {
-        drawH = photo.h;
-        drawW = photo.h * imgAspect;
-        drawX = photo.x - (drawW - photo.w) / 2;
+        drawH = photoAreaH;
+        drawW = photoAreaH * imgAspect;
+        drawX = photo.x - (drawW - photoAreaW) / 2;
       } else {
-        drawW = photo.w;
-        drawH = photo.w / imgAspect;
-        drawY = photo.y - (drawH - photo.h) / 2;
+        drawW = photoAreaW;
+        drawH = photoAreaW / imgAspect;
+        drawY = photo.y - (drawH - photoAreaH) / 2;
       }
+
       ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
       ctx.restore();
 
-      /* ── LAYER 2: Template PNG — ON TOP of photo ── */
+      /* ────────────────────────────────────────────────────────────────────
+       * LAYER 2: Template PNG — ON TOP of photo (cutout reveals photo)
+       * ─────────────────────────────────────────────────────────────────── */
       ctx.drawImage(templateImg, 0, 0, CARD_W, CARD_H);
 
-      /* ── LAYER 3: Text — ON TOP of template using editor positions ── */
-      const tl = template.textLayout;
+      /* ────────────────────────────────────────────────────────────────────
+       * LAYER 3: Dynamic Text — ON TOP of template
+       * ─────────────────────────────────────────────────────────────────── */
 
-      // NAME — use editor text.nameX / nameY
-      const nameFontSize = fitFontSize(ctx, name.toUpperCase(), tl.name.maxWidth, 80, 40);
-      ctx.font = `900 ${nameFontSize}px "Space Grotesk", sans-serif`;
-      ctx.fillStyle = tl.name.color;
-      ctx.textAlign = 'left';
+      // ── 1. NAME
+      const nameElem = elements.name;
+      const nameFontSize = fitFontSize(
+        ctx,
+        name.toUpperCase(),
+        nameElem.maxWidth || 900,
+        nameElem.fontSize || 64,
+        32,
+        nameElem.fontWeight || 900
+      );
+      ctx.font = `${nameElem.fontWeight || 900} ${nameFontSize}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = nameElem.color;
+      ctx.textAlign = nameElem.align;
       setShadow(ctx, 10);
-      ctx.fillText(name.toUpperCase(), text.nameX, text.nameY);
+      ctx.fillText(name.toUpperCase(), nameElem.x, nameElem.y);
       clearShadow(ctx);
-      // Underline
-      const nameTextW = ctx.measureText(name.toUpperCase()).width;
-      ctx.fillStyle = '#FFD51C';
-      ctx.fillRect(text.nameX, text.nameY + 8, Math.min(nameTextW, tl.name.maxWidth), 5);
 
-      // ROLE
-      ctx.font = `700 28px "Space Grotesk", sans-serif`;
-      ctx.fillStyle = tl.role.color;
-      ctx.textAlign = 'left';
+      // ── 2. ROLE ("What do you build?")
+      const roleElem = elements.role;
+      const roleFontSize = roleElem.fontSize || 26;
+      ctx.font = `${roleElem.fontWeight || 700} ${roleFontSize}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = roleElem.color;
+      ctx.textAlign = roleElem.align;
       setShadow(ctx, 8);
-      wrapText(ctx, whatYouBuild, text.roleX, text.roleY, tl.role.maxWidth, 36);
+      wrapText(
+        ctx,
+        whatYouBuild,
+        roleElem.x,
+        roleElem.y,
+        roleElem.maxWidth || 860,
+        Math.round(roleFontSize * 1.35)
+      );
       clearShadow(ctx);
 
-      // STACK chips
-      if (stack.trim()) {
-        const chips = stack.split(/[·\-,\/]+/).map((s) => s.trim()).filter(Boolean).slice(0, 6);
-        let chipX = text.stackX;
-        const chipY = text.stackY;
-        ctx.font = `600 18px "Space Grotesk", sans-serif`;
-        ctx.textAlign = 'left';
-        chips.forEach((chip) => {
-          const tw = ctx.measureText(chip).width + 24;
-          if (chipX + tw > CARD_W - 60) return;
-          ctx.fillStyle = tl.stack.chipBg;
-          ctx.fillRect(chipX, chipY, tw, 30);
-          ctx.fillStyle = tl.stack.color;
-          ctx.fillText(chip, chipX + 12, chipY + 21);
-          chipX += tw + 10;
-        });
-      }
-
-      // BUILDER TITLE
-      ctx.textAlign = 'right';
-      ctx.font = `700 20px "Space Grotesk", sans-serif`;
-      ctx.fillStyle = tl.title.color;
+      // ── 3. GENERATED BUILDER TITLE
+      const titleElem = elements.title;
+      const titleFontSize = titleElem.fontSize || 22;
+      ctx.font = `${titleElem.fontWeight || 700} ${titleFontSize}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = titleElem.color;
+      ctx.textAlign = titleElem.align;
       setShadow(ctx, 6);
-      ctx.fillText(`"${title}"`, text.titleX, text.titleY);
+      ctx.fillText(`"${title}"`, titleElem.x, titleElem.y);
       clearShadow(ctx);
 
-      // FOOTER: serial (left) + hashtag (right)
-      ctx.font = `400 14px "Space Grotesk", sans-serif`;
-      ctx.fillStyle = tl.footer.color;
-      ctx.textAlign = 'left';
-      ctx.fillText(serial, tl.footer.leftX, text.footerY);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#FFD51C';
-      ctx.font = `700 14px "Space Grotesk", sans-serif`;
-      ctx.fillText('#HHGoa2026', tl.footer.rightX, text.footerY);
+      // ── 4. SERIAL CODE
+      const serialElem = elements.serial;
+      ctx.font = `${serialElem.fontWeight || 400} ${serialElem.fontSize || 14}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = serialElem.color;
+      ctx.textAlign = serialElem.align;
+      ctx.fillText(serial, serialElem.x, serialElem.y);
+
+      // ── 5. HASHTAG
+      const hashElem = elements.hashtag;
+      ctx.font = `${hashElem.fontWeight || 700} ${hashElem.fontSize || 14}px "Space Grotesk", sans-serif`;
+      ctx.fillStyle = hashElem.color;
+      ctx.textAlign = hashElem.align;
+      ctx.fillText('#HHGoa2026', hashElem.x, hashElem.y);
+
       ctx.textAlign = 'left';
 
       return canvas.toDataURL('image/png', 0.96);
