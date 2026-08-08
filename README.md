@@ -2,7 +2,7 @@
 
 > A custom, template-driven Builder Card Editor & Generator built with **React**, **TypeScript**, **Vite**, **Tailwind CSS / Vanilla CSS Tokens**, and **HTML5 Canvas**.
 
-![Hacker House Goa 2026](public/templates/templete_1.png)
+![Hacker House Goa 2026](public/templates/template_1.png)
 
 ---
 
