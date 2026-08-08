@@ -2,7 +2,7 @@
  * Template registry for HH Goa 2026 Builder ID Cards.
  *
  * Each template PNG has a transparent cutout where the user's photo shows through.
- * Photo is drawn BEHIND the template; text and barcodes are drawn ON TOP.
+ * Photo is drawn BEHIND the template; text, barcode, and QR code are drawn ON TOP.
  *
  * All coordinates are in the 1080×1350 canvas space.
  * EVERY TEMPLATE OWNS ITS OWN POSITIONS, COLORS, AND ALIGNMENTS.
@@ -39,8 +39,8 @@ export interface TemplateElements {
   role: ElementPosition;
   title: ElementPosition;
   serial: ElementPosition;
-  hashtag: ElementPosition;
   barcode: BarcodePosition;
+  qrcode: BarcodePosition;
 }
 
 export interface TemplateConfig {
@@ -78,23 +78,23 @@ export const TEMPLATES: TemplateConfig[] = [
         "maxWidth": 900,
         "fontSize": 39,
         "fontWeight": 900,
-        "color": "#ffffff",
+        "color": "#181109",
         "align": "center"
       },
       "role": {
-        "x": 738,
-        "y": 1101,
+        "x": 764,
+        "y": 1029,
         "maxWidth": 860,
         "fontSize": 35,
-        "fontWeight": 700,
-        "color": "#ffffff",
+        "fontWeight": 900,
+        "color": "#18110b",
         "align": "center"
       },
       "title": {
-        "x": 286,
-        "y": 1121,
-        "fontSize": 22,
-        "fontWeight": 700,
+        "x": 322,
+        "y": 1105,
+        "fontSize": 39,
+        "fontWeight": 900,
         "color": "#002b0b",
         "align": "center"
       },
@@ -105,19 +105,20 @@ export const TEMPLATES: TemplateConfig[] = [
         "h": 50,
         "color": "#FFD51C"
       },
+      "qrcode": {
+        "x": 646,
+        "y": 1203,
+        "w": 80,
+        "h": 80,
+        "color": "#ffffff"
+      },
       "serial": {
         "x": 109,
         "y": 1251,
         "fontSize": 26,
+        "fontWeight": 900,
         "color": "#000000",
         "align": "left"
-      },
-      "hashtag": {
-        "x": 967,
-        "y": 1319,
-        "fontSize": 0,
-        "color": "#000000",
-        "align": "right"
       }
     }
   },
@@ -148,7 +149,7 @@ export const TEMPLATES: TemplateConfig[] = [
         y: 990,
         maxWidth: 860,
         fontSize: 26,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#FFD51C',
         align: 'center',
       },
@@ -156,7 +157,7 @@ export const TEMPLATES: TemplateConfig[] = [
         x: 540,
         y: 1055,
         fontSize: 22,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#16B98C',
         align: 'center',
       },
@@ -167,19 +168,20 @@ export const TEMPLATES: TemplateConfig[] = [
         h: 40,
         color: '#FFD51C',
       },
+      qrcode: {
+        x: 930,
+        y: 1190,
+        w: 80,
+        h: 80,
+        color: '#FFD51C',
+      },
       serial: {
         x: 80,
         y: 1220,
-        fontSize: 14,
+        fontSize: 18,
+        fontWeight: 900,
         color: '#B7C7A7',
         align: 'left',
-      },
-      hashtag: {
-        x: 1000,
-        y: 1220,
-        fontSize: 14,
-        color: '#FFD51C',
-        align: 'right',
       },
     },
   },
@@ -210,7 +212,7 @@ export const TEMPLATES: TemplateConfig[] = [
         y: 1055,
         maxWidth: 940,
         fontSize: 26,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#FFD51C',
         align: 'left',
       },
@@ -218,7 +220,7 @@ export const TEMPLATES: TemplateConfig[] = [
         x: 70,
         y: 1120,
         fontSize: 22,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#16B98C',
         align: 'left',
       },
@@ -229,19 +231,20 @@ export const TEMPLATES: TemplateConfig[] = [
         h: 40,
         color: '#FFD51C',
       },
+      qrcode: {
+        x: 920,
+        y: 1175,
+        w: 80,
+        h: 80,
+        color: '#FFD51C',
+      },
       serial: {
         x: 70,
         y: 1250,
-        fontSize: 14,
+        fontSize: 18,
+        fontWeight: 900,
         color: '#B7C7A7',
         align: 'left',
-      },
-      hashtag: {
-        x: 1010,
-        y: 1250,
-        fontSize: 14,
-        color: '#FFD51C',
-        align: 'right',
       },
     },
   },
@@ -272,7 +275,7 @@ export const TEMPLATES: TemplateConfig[] = [
         y: 980,
         maxWidth: 860,
         fontSize: 26,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#FFD51C',
         align: 'center',
       },
@@ -280,7 +283,7 @@ export const TEMPLATES: TemplateConfig[] = [
         x: 540,
         y: 1045,
         fontSize: 22,
-        fontWeight: 700,
+        fontWeight: 900,
         color: '#16B98C',
         align: 'center',
       },
@@ -291,19 +294,20 @@ export const TEMPLATES: TemplateConfig[] = [
         h: 40,
         color: '#FFD51C',
       },
+      qrcode: {
+        x: 930,
+        y: 1180,
+        w: 80,
+        h: 80,
+        color: '#FFD51C',
+      },
       serial: {
         x: 80,
         y: 1210,
-        fontSize: 14,
+        fontSize: 18,
+        fontWeight: 900,
         color: '#B7C7A7',
         align: 'left',
-      },
-      hashtag: {
-        x: 1000,
-        y: 1210,
-        fontSize: 14,
-        color: '#FFD51C',
-        align: 'right',
       },
     },
   },

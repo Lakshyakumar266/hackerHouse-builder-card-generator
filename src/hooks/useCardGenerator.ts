@@ -68,20 +68,6 @@ function wrapText(
   return currentY;
 }
 
-function setShadow(ctx: CanvasRenderingContext2D, blur = 8, color = 'rgba(0,0,0,0.65)') {
-  ctx.shadowBlur = blur;
-  ctx.shadowColor = color;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
-}
-
-function clearShadow(ctx: CanvasRenderingContext2D) {
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = 'transparent';
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-}
-
 /** Draws a barcode graphic directly on Canvas using serial string + barcode bounds */
 function drawBarcodeOnCanvas(
   ctx: CanvasRenderingContext2D,
@@ -94,6 +80,8 @@ function drawBarcodeOnCanvas(
 ) {
   ctx.save();
   ctx.fillStyle = color;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
 
   const numBars = 36;
   const unit = w / (numBars * 1.6);
@@ -109,6 +97,56 @@ function drawBarcodeOnCanvas(
       ctx.fillRect(curX, y, barW, h);
     }
     curX += barW + unit * 0.5;
+  }
+
+  ctx.restore();
+}
+
+/** Draws a stylized vector QR Code graphic on Canvas */
+function drawQRCodeOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  codeStr: string
+) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+
+  const grid = 12; // 12x12 QR grid
+  const cellW = w / grid;
+  const cellH = h / grid;
+
+  // Render finder patterns (top-left, top-right, bottom-left 3x3 squares)
+  const finders = [
+    [0, 0],
+    [grid - 3, 0],
+    [0, grid - 3],
+  ];
+
+  finders.forEach(([fx, fy]) => {
+    ctx.fillRect(x + fx * cellW, y + fy * cellH, 3 * cellW, 3 * cellH);
+    ctx.clearRect(x + (fx + 0.6) * cellW, y + (fy + 0.6) * cellH, 1.8 * cellW, 1.8 * cellH);
+    ctx.fillRect(x + (fx + 1) * cellW, y + (fy + 1) * cellH, cellW, cellH);
+  });
+
+  // Render internal pseudo-random data modules based on codeStr
+  for (let row = 0; row < grid; row++) {
+    for (let col = 0; col < grid; col++) {
+      // Skip finder areas
+      if ((row < 3 && col < 3) || (row < 3 && col >= grid - 3) || (row >= grid - 3 && col < 3)) {
+        continue;
+      }
+      const charCode = codeStr.charCodeAt((row * grid + col) % codeStr.length) || 72;
+      const isFilled = (charCode + row * 11 + col * 17) % 2 === 0;
+      if (isFilled) {
+        ctx.fillRect(x + col * cellW, y + row * cellH, cellW * 0.9, cellH * 0.9);
+      }
+    }
   }
 
   ctx.restore();
@@ -180,12 +218,14 @@ export function useCardGenerator() {
       ctx.drawImage(templateImg, 0, 0, CARD_W, CARD_H);
 
       /* ────────────────────────────────────────────────────────────────────
-       * LAYER 3: Dynamic Text & Barcode — ON TOP of template
-       * Set textBaseline = 'top' so Canvas matches DOM preview 1:1!
+       * LAYER 3: Dynamic Text & Barcode & QR Code — ON TOP of template
+       * Set textBaseline = 'top' and zero drop shadow for crisp rendering!
        * ─────────────────────────────────────────────────────────────────── */
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
       ctx.textBaseline = 'top';
 
-      // ── 1. NAME
+      // ── 1. NAME (bold, no underline, no drop shadow)
       const nameElem = elements.name;
       const nameFontSize = fitFontSize(
         ctx,
@@ -193,37 +233,19 @@ export function useCardGenerator() {
         nameElem.maxWidth || 900,
         nameElem.fontSize || 64,
         32,
-        nameElem.fontWeight || 900
+        900
       );
-      ctx.font = `${nameElem.fontWeight || 900} ${nameFontSize}px "Space Grotesk", sans-serif`;
+      ctx.font = `900 ${nameFontSize}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = nameElem.color;
       ctx.textAlign = nameElem.align;
-      setShadow(ctx, 10);
       ctx.fillText(name.toUpperCase(), nameElem.x, nameElem.y);
-      clearShadow(ctx);
 
-      // Underline
-      ctx.textAlign = 'left';
-      const nameTextW = ctx.measureText(name.toUpperCase()).width;
-      let underlineX = nameElem.x;
-      if (nameElem.align === 'center') underlineX = nameElem.x - nameTextW / 2;
-      if (nameElem.align === 'right') underlineX = nameElem.x - nameTextW;
-
-      ctx.fillStyle = '#FFD51C';
-      ctx.fillRect(
-        underlineX,
-        nameElem.y + nameFontSize + 6,
-        Math.min(nameTextW, nameElem.maxWidth || 900),
-        5
-      );
-
-      // ── 2. ROLE ("What do you build?")
+      // ── 2. ROLE ("What do you build?") (bold, no drop shadow)
       const roleElem = elements.role;
       const roleFontSize = roleElem.fontSize || 26;
-      ctx.font = `${roleElem.fontWeight || 700} ${roleFontSize}px "Space Grotesk", sans-serif`;
+      ctx.font = `900 ${roleFontSize}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = roleElem.color;
       ctx.textAlign = roleElem.align;
-      setShadow(ctx, 8);
       wrapText(
         ctx,
         whatYouBuild,
@@ -232,37 +254,33 @@ export function useCardGenerator() {
         roleElem.maxWidth || 860,
         Math.round(roleFontSize * 1.35)
       );
-      clearShadow(ctx);
 
-      // ── 3. GENERATED BUILDER TITLE
+      // ── 3. GENERATED BUILDER TITLE (bold, no quotes, no drop shadow)
       const titleElem = elements.title;
       const titleFontSize = titleElem.fontSize || 22;
-      ctx.font = `${titleElem.fontWeight || 700} ${titleFontSize}px "Space Grotesk", sans-serif`;
+      ctx.font = `900 ${titleFontSize}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = titleElem.color;
       ctx.textAlign = titleElem.align;
-      setShadow(ctx, 6);
-      ctx.fillText(`"${title}"`, titleElem.x, titleElem.y);
-      clearShadow(ctx);
+      ctx.fillText(title, titleElem.x, titleElem.y);
 
-      // ── 4. BARCODE GRAPHIC
+      // ── 4. BARCODE GRAPHIC (exact x, y, w, h from editor)
       if (elements.barcode) {
         const bc = elements.barcode;
         drawBarcodeOnCanvas(ctx, bc.x, bc.y, bc.w, bc.h, bc.color, serial);
       }
 
-      // ── 5. SERIAL CODE
+      // ── 5. QR CODE GRAPHIC (exact x, y, w, h from editor)
+      if (elements.qrcode) {
+        const qr = elements.qrcode;
+        drawQRCodeOnCanvas(ctx, qr.x, qr.y, qr.w, qr.h, qr.color, serial);
+      }
+
+      // ── 6. SERIAL CODE (bold, no drop shadow)
       const serialElem = elements.serial;
-      ctx.font = `${serialElem.fontWeight || 400} ${serialElem.fontSize || 14}px "Space Grotesk", sans-serif`;
+      ctx.font = `900 ${serialElem.fontSize || 14}px "Space Grotesk", sans-serif`;
       ctx.fillStyle = serialElem.color;
       ctx.textAlign = serialElem.align;
       ctx.fillText(serial, serialElem.x, serialElem.y);
-
-      // ── 6. HASHTAG
-      const hashElem = elements.hashtag;
-      ctx.font = `${hashElem.fontWeight || 700} ${hashElem.fontSize || 14}px "Space Grotesk", sans-serif`;
-      ctx.fillStyle = hashElem.color;
-      ctx.textAlign = hashElem.align;
-      ctx.fillText('#HHGoa2026', hashElem.x, hashElem.y);
 
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';

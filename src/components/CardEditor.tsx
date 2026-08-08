@@ -16,8 +16,8 @@ export interface EditorElements {
   role: ElementPosition;
   title: ElementPosition;
   serial: ElementPosition;
-  hashtag: ElementPosition;
   barcode: BarcodePosition;
+  qrcode: BarcodePosition;
 }
 
 export interface EditorState {
@@ -32,8 +32,8 @@ export type DragTarget =
   | 'role'
   | 'title'
   | 'serial'
-  | 'hashtag'
-  | 'barcode';
+  | 'barcode'
+  | 'qrcode';
 
 interface Props {
   croppedPhoto: string;
@@ -249,7 +249,7 @@ export default function CardEditor({
 
   // Currently selected element for controls editing
   const selectedTextElem =
-    selectedEl !== 'photo' && selectedEl !== 'barcode'
+    selectedEl !== 'photo' && selectedEl !== 'barcode' && selectedEl !== 'qrcode'
       ? (elements[selectedEl as keyof EditorElements] as ElementPosition)
       : null;
 
@@ -379,7 +379,7 @@ export default function CardEditor({
           SELECT ELEMENT TO MOVE
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--sp-2)' }}>
-          {(['photo', 'name', 'role', 'title', 'barcode', 'serial', 'hashtag'] as DragTarget[]).map(
+          {(['photo', 'name', 'role', 'title', 'barcode', 'qrcode', 'serial'] as DragTarget[]).map(
             (el) => (
               <button
                 key={el}
@@ -463,11 +463,11 @@ export default function CardEditor({
           />
 
           {/* ──────────────────────────────────────────────────────────────────
-           * LAYER 3: Dynamic Text Elements & Barcode — ON TOP of template
-           * Match Canvas textBaseline = 'top' by setting top: e.y * SCALE!
+           * LAYER 3: Dynamic Text Elements & Barcode / QR — ON TOP of template
+           * Top-aligned baseline with 1:1 Canvas parity!
            * ───────────────────────────────────────────────────────────────── */}
 
-          {/* 1. NAME */}
+          {/* 1. NAME (bold, no underline, no shadow) */}
           {(() => {
             const e = elements.name;
             const px = e.x * SCALE;
@@ -482,7 +482,7 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '0 4px',
+                  padding: '0 2px',
                   lineHeight: 1,
                   background:
                     activeEl === 'name' || selectedEl === 'name'
@@ -493,10 +493,9 @@ export default function CardEditor({
                 <span
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontWeight: e.fontWeight || 900,
+                    fontWeight: 900,
                     fontSize: `${Math.round((e.fontSize || 64) * SCALE)}px`,
                     color: e.color,
-                    textShadow: '1px 1px 4px rgba(0,0,0,0.85)',
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
@@ -510,7 +509,7 @@ export default function CardEditor({
             );
           })()}
 
-          {/* 2. ROLE */}
+          {/* 2. ROLE (bold, no shadow) */}
           {(() => {
             const e = elements.role;
             const px = e.x * SCALE;
@@ -525,7 +524,7 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '0 4px',
+                  padding: '0 2px',
                   maxWidth: (e.maxWidth || 860) * SCALE,
                   lineHeight: 1,
                   background:
@@ -537,10 +536,9 @@ export default function CardEditor({
                 <span
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontWeight: e.fontWeight || 700,
+                    fontWeight: 900,
                     fontSize: `${Math.round((e.fontSize || 26) * SCALE)}px`,
                     color: e.color,
-                    textShadow: '1px 1px 4px rgba(0,0,0,0.85)',
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
@@ -556,7 +554,7 @@ export default function CardEditor({
             );
           })()}
 
-          {/* 3. BUILDER TITLE */}
+          {/* 3. BUILDER TITLE (bold, no quotes, no shadow) */}
           {(() => {
             const e = elements.title;
             const px = e.x * SCALE;
@@ -571,7 +569,7 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '0 4px',
+                  padding: '0 2px',
                   lineHeight: 1,
                   background:
                     activeEl === 'title' || selectedEl === 'title'
@@ -582,26 +580,25 @@ export default function CardEditor({
                 <span
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontWeight: e.fontWeight || 700,
+                    fontWeight: 900,
                     fontSize: `${Math.round((e.fontSize || 22) * SCALE)}px`,
                     color: e.color,
-                    textShadow: '1px 1px 4px rgba(0,0,0,0.85)',
                     whiteSpace: 'nowrap',
                     display: 'block',
                     textAlign: e.align,
                     lineHeight: 1,
                   }}
                 >
-                  "{generatedTitle}"
+                  {generatedTitle}
                 </span>
                 {selectedEl === 'title' && <BadgeLabel>TITLE</BadgeLabel>}
               </div>
             );
           })()}
 
-          {/* 4. BARCODE */}
+          {/* 4. BARCODE GRAPHIC */}
           {(() => {
-            const bc = elements.barcode || { x: 430, y: 1170, w: 220, h: 44, color: '#FFD51C' };
+            const bc = elements.barcode || { x: 433, y: 1223, w: 180, h: 50, color: '#FFD51C' };
             const px = bc.x * SCALE;
             const py = bc.y * SCALE;
             const pw = bc.w * SCALE;
@@ -616,14 +613,13 @@ export default function CardEditor({
                   top: py,
                   width: pw,
                   height: ph,
-                  padding: '2px',
+                  padding: '1px',
                   background:
                     activeEl === 'barcode' || selectedEl === 'barcode'
                       ? 'rgba(255, 213, 28, 0.25)'
                       : 'transparent',
                 }}
               >
-                {/* SVG Barcode Preview matching Canvas barcode renderer */}
                 <svg width="100%" height="100%" viewBox={`0 0 ${bc.w} ${bc.h}`}>
                   {Array.from({ length: 36 }).map((_, idx) => {
                     const charCode = generatedSerial.charCodeAt(idx % generatedSerial.length) || 65;
@@ -632,7 +628,6 @@ export default function CardEditor({
                     const unit = bc.w / (36 * 1.6);
                     const barW = isWide ? unit * 2.2 : unit * 1.1;
 
-                    // Calculate X position
                     let curX = 0;
                     for (let j = 0; j < idx; j++) {
                       const c = generatedSerial.charCodeAt(j % generatedSerial.length) || 65;
@@ -649,7 +644,66 @@ export default function CardEditor({
             );
           })()}
 
-          {/* 5. SERIAL */}
+          {/* 5. QR CODE GRAPHIC */}
+          {(() => {
+            const qr = elements.qrcode || { x: 930, y: 1200, w: 80, h: 80, color: '#ffffff' };
+            const px = qr.x * SCALE;
+            const py = qr.y * SCALE;
+            const pw = qr.w * SCALE;
+            const ph = qr.h * SCALE;
+
+            return (
+              <div
+                onPointerDown={(evt) => startDrag(evt, 'qrcode', qr.x, qr.y)}
+                style={{
+                  ...getElementStyle('qrcode'),
+                  left: px,
+                  top: py,
+                  width: pw,
+                  height: ph,
+                  padding: '1px',
+                  background:
+                    activeEl === 'qrcode' || selectedEl === 'qrcode'
+                      ? 'rgba(255, 213, 28, 0.25)'
+                      : 'transparent',
+                }}
+              >
+                <svg width="100%" height="100%" viewBox={`0 0 ${qr.w} ${qr.h}`}>
+                  {/* Outer & inner finder patterns */}
+                  {[[0, 0], [qr.w * 0.75, 0], [0, qr.h * 0.75]].map(([fx, fy], idx) => (
+                    <g key={idx}>
+                      <rect x={fx} y={fy} width={qr.w * 0.25} height={qr.h * 0.25} fill={qr.color} />
+                      <rect x={fx + qr.w * 0.05} y={fy + qr.h * 0.05} width={qr.w * 0.15} height={qr.h * 0.15} fill="#000" />
+                      <rect x={fx + qr.w * 0.08} y={fy + qr.h * 0.08} width={qr.w * 0.09} height={qr.h * 0.09} fill={qr.color} />
+                    </g>
+                  ))}
+                  {/* Modules */}
+                  {Array.from({ length: 12 }).map((_, r) =>
+                    Array.from({ length: 12 }).map((_, c) => {
+                      if ((r < 4 && c < 4) || (r < 4 && c >= 8) || (r >= 8 && c < 4)) return null;
+                      const charCode = generatedSerial.charCodeAt((r * 12 + c) % generatedSerial.length) || 72;
+                      if ((charCode + r * 11 + c * 17) % 2 === 0) {
+                        return (
+                          <rect
+                            key={`${r}-${c}`}
+                            x={c * (qr.w / 12)}
+                            y={r * (qr.h / 12)}
+                            width={(qr.w / 12) * 0.9}
+                            height={(qr.h / 12) * 0.9}
+                            fill={qr.color}
+                          />
+                        );
+                      }
+                      return null;
+                    })
+                  )}
+                </svg>
+                {selectedEl === 'qrcode' && <BadgeLabel>QRCODE</BadgeLabel>}
+              </div>
+            );
+          })()}
+
+          {/* 6. SERIAL (bold, no shadow) */}
           {(() => {
             const e = elements.serial;
             const px = e.x * SCALE;
@@ -664,7 +718,7 @@ export default function CardEditor({
                   left: px,
                   top: py,
                   transform: `translateX(${alignX})`,
-                  padding: '0 4px',
+                  padding: '0 2px',
                   lineHeight: 1,
                   background:
                     activeEl === 'serial' || selectedEl === 'serial'
@@ -675,7 +729,7 @@ export default function CardEditor({
                 <span
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontWeight: e.fontWeight || 400,
+                    fontWeight: 900,
                     fontSize: `${Math.round((e.fontSize || 14) * SCALE)}px`,
                     color: e.color,
                     whiteSpace: 'nowrap',
@@ -687,48 +741,6 @@ export default function CardEditor({
                   {generatedSerial}
                 </span>
                 {selectedEl === 'serial' && <BadgeLabel>SERIAL</BadgeLabel>}
-              </div>
-            );
-          })()}
-
-          {/* 6. HASHTAG */}
-          {(() => {
-            const e = elements.hashtag;
-            const px = e.x * SCALE;
-            const py = e.y * SCALE;
-            const alignX = e.align === 'center' ? '-50%' : e.align === 'right' ? '-100%' : '0%';
-
-            return (
-              <div
-                onPointerDown={(evt) => startDrag(evt, 'hashtag', e.x, e.y)}
-                style={{
-                  ...getElementStyle('hashtag'),
-                  left: px,
-                  top: py,
-                  transform: `translateX(${alignX})`,
-                  padding: '0 4px',
-                  lineHeight: 1,
-                  background:
-                    activeEl === 'hashtag' || selectedEl === 'hashtag'
-                      ? 'rgba(255, 213, 28, 0.2)'
-                      : 'transparent',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: e.fontWeight || 700,
-                    fontSize: `${Math.round((e.fontSize || 14) * SCALE)}px`,
-                    color: e.color,
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                    textAlign: e.align,
-                    lineHeight: 1,
-                  }}
-                >
-                  #HHGoa2026
-                </span>
-                {selectedEl === 'hashtag' && <BadgeLabel>HASHTAG</BadgeLabel>}
               </div>
             );
           })()}
@@ -831,8 +843,8 @@ export default function CardEditor({
           </div>
         )}
 
-        {/* BARCODE CONTROLS */}
-        {selectedEl === 'barcode' && (
+        {/* BARCODE / QRCODE CONTROLS */}
+        {(selectedEl === 'barcode' || selectedEl === 'qrcode') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-3)' }}>
               <div>
@@ -840,12 +852,12 @@ export default function CardEditor({
                 <input
                   type="number"
                   className="hhg-input"
-                  value={elements.barcode.x}
+                  value={elements[selectedEl].x}
                   onChange={(evt) => {
                     const nx = Number(evt.target.value);
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, x: nx },
+                      [selectedEl]: { ...prev[selectedEl], x: nx },
                     }));
                   }}
                 />
@@ -855,12 +867,12 @@ export default function CardEditor({
                 <input
                   type="number"
                   className="hhg-input"
-                  value={elements.barcode.y}
+                  value={elements[selectedEl].y}
                   onChange={(evt) => {
                     const ny = Number(evt.target.value);
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, y: ny },
+                      [selectedEl]: { ...prev[selectedEl], y: ny },
                     }));
                   }}
                 />
@@ -869,31 +881,31 @@ export default function CardEditor({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-3)' }}>
               <div>
-                <label className="hhg-label">BARCODE WIDTH</label>
+                <label className="hhg-label">WIDTH (W)</label>
                 <input
                   type="number"
                   className="hhg-input"
-                  value={elements.barcode.w}
+                  value={elements[selectedEl].w}
                   onChange={(evt) => {
                     const nw = Number(evt.target.value);
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, w: nw },
+                      [selectedEl]: { ...prev[selectedEl], w: nw },
                     }));
                   }}
                 />
               </div>
               <div>
-                <label className="hhg-label">BARCODE HEIGHT</label>
+                <label className="hhg-label">HEIGHT (H)</label>
                 <input
                   type="number"
                   className="hhg-input"
-                  value={elements.barcode.h}
+                  value={elements[selectedEl].h}
                   onChange={(evt) => {
                     const nh = Number(evt.target.value);
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, h: nh },
+                      [selectedEl]: { ...prev[selectedEl], h: nh },
                     }));
                   }}
                 />
@@ -905,12 +917,12 @@ export default function CardEditor({
               <div style={{ display: 'flex', gap: 'var(--sp-2)', alignItems: 'center' }}>
                 <input
                   type="color"
-                  value={elements.barcode.color}
+                  value={elements[selectedEl].color}
                   onChange={(evt) => {
                     const nc = evt.target.value;
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, color: nc },
+                      [selectedEl]: { ...prev[selectedEl], color: nc },
                     }));
                   }}
                   style={{
@@ -925,12 +937,12 @@ export default function CardEditor({
                 <input
                   type="text"
                   className="hhg-input"
-                  value={elements.barcode.color}
+                  value={elements[selectedEl].color}
                   onChange={(evt) => {
                     const nc = evt.target.value;
                     setElements((prev) => ({
                       ...prev,
-                      barcode: { ...prev.barcode, color: nc },
+                      [selectedEl]: { ...prev[selectedEl], color: nc },
                     }));
                   }}
                   style={{ fontSize: '13px', padding: '8px 10px' }}
@@ -1036,7 +1048,7 @@ export default function CardEditor({
                         flex: 1,
                         fontSize: '10px',
                         fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
+                        fontWeight: 900,
                         padding: '10px 0',
                         cursor: 'pointer',
                         border: '1px solid var(--color-border)',
@@ -1075,7 +1087,7 @@ export default function CardEditor({
                     fontFamily: 'var(--font-display)',
                     fontSize: '12px',
                     color: 'var(--color-yellow)',
-                    fontWeight: 700,
+                    fontWeight: 900,
                   }}
                 >
                   {selectedTextElem.fontSize || 24}px
