@@ -79,28 +79,28 @@ bun run build
 ## 📂 Project Structure
 
 ```
-task-1/
-├── public/
-│   └── templates/          # Template PNG assets (templete_1 to templete_5)
-├── src/
-│   ├── assets/             # Brand logos (Hacker House, Goa Hindi, 2:47 PM Studio)
-│   ├── components/
-│   │   ├── Hero.tsx         # Landing hero & footer with socials
-│   │   ├── PhotoUpload.tsx  # Photo crop tool
-│   │   ├── BuilderForm.tsx  # Identity input form
-│   │   ├── CardEditor.tsx   # Interactive Canvas-driven editor & hitboxes
-│   │   ├── CardPreview.tsx  # Final card display
-│   │   └── SharePanel.tsx   # Download & X share controls
-│   ├── hooks/
-│   │   └── useCardGenerator.ts # Generator hook using canonical renderer
-│   ├── lib/
-│   │   ├── cardRenderer.ts  # Canonical 1080x1350 Canvas rendering engine
-│   │   ├── builderTitle.ts  # Title generator & serial code generator
-│   │   └── templateConfig.ts# Template JSON coordinate configurations
-│   ├── App.tsx              # Multi-stage application workflow shell
-│   └── index.css            # Hallmark design system tokens & utilities
-├── README.md
-└── package.json
+
+public/
+└── templates/          # Template PNG assets (templete_1 to templete_5)
+src/
+├── assets/             # Brand logos (Hacker House, Goa Hindi, 2:47 PM Studio)
+├── components/
+│   ├── Hero.tsx         # Landing hero & footer with socials
+│   ├── PhotoUpload.tsx  # Photo crop tool
+│   ├── BuilderForm.tsx  # Identity input form
+│   ├── CardEditor.tsx   # Interactive Canvas-driven editor & hitboxes
+│   ├── CardPreview.tsx  # Final card display
+│   └── SharePanel.tsx   # Download & X share controls
+├── hooks/
+│   └── useCardGenerator.ts # Generator hook using canonical renderer
+├── lib/
+│   ├── cardRenderer.ts  # Canonical 1080x1350 Canvas rendering engine
+│   ├── builderTitle.ts  # Title generator & serial code generator
+│   └── templateConfig.ts# Template JSON coordinate configurations
+├── App.tsx              # Multi-stage application workflow shell
+└── index.css            # Hallmark design system tokens & utilities
+README.md
+package.json
 ```
 
 ---
