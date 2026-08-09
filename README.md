@@ -107,13 +107,4 @@ task-1/
 
 ## 👤 Author
 
-Made with ⚡ by **Lakshya**
-
-- **X / Twitter**: [@Lakshyakumar266](https://x.com/Lakshyakumar266)
-- **GitHub**: [@Lakshyakumar266](https://github.com/Lakshyakumar266)
-
----
-
-## 📄 License
-
-MIT License © 2026 [Lakshya](https://github.com/Lakshyakumar266)
+Made by **Lakshya kumar**
